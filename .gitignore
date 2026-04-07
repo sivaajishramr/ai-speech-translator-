@@ -23,3 +23,7 @@ hf-deploy/.git/
 
 # Node
 node_modules/
+
+# Word temp files
+~$*
+*.docx
