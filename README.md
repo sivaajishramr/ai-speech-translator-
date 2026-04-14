@@ -10,7 +10,7 @@
 [![Whisper](https://img.shields.io/badge/Faster--Whisper-AI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://github.com/SYSTRAN/faster-whisper)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-*A low-cost (~₹440), open-source, real-time speech translation device powered by ESP32 and deep learning*
+*A low-cost (~₹500), open-source, real-time speech translation device powered by ESP32 and deep learning*
 
 </div>
 
@@ -42,7 +42,7 @@ This project is a **portable, real-time AI speech translator** built around the 
 
 | | Commercial Devices | This Project |
 |---|---|---|
-| 💰 **Cost** | ₹8,000 – ₹25,000 | **~₹440** |
+| 💰 **Cost** | ₹8,000 – ₹25,000 | **~₹500** |
 | 🌍 **Languages** | 80–155 | **100+** |
 | 🙌 **Hands-Free** | ❌ | ✅ Physical buttons |
 | 🎧 **BT Earbuds** | ❌ | ✅ |
@@ -108,9 +108,10 @@ This project is a **portable, real-time AI speech translator** built around the 
 |-----------|---------|-----------|
 | ESP32 DevKit | BLE controller + buttons | ₹290 |
 | Push Buttons ×3 | Record / Replay / Previous | ₹25 |
-| Jumper Wires | Connections | ₹40 |
-| Breadboard | Prototyping | ₹85 |
-| **Total** | | **~₹440** |
+| Soldering Wire | Permanent connections | ₹30 |
+| Li-ion Battery | Portable power | ₹80 |
+| Power Bank Module | Charging + 5V output | ₹60 |
+| **Total** | | **~₹500** |
 
 ### Wiring Diagram
 
@@ -123,7 +124,7 @@ GPIO 16      →    Previous Button → GND
 GPIO 2       →    Built-in LED (most boards)
 ```
 
-> All buttons use **INPUT_PULLUP** — just connect button between GPIO pin and GND.
+> All connections are **soldered** for durability. Buttons use **INPUT_PULLUP** — connect between GPIO pin and GND. Powered by Li-ion battery with power bank charging module.
 
 ---
 

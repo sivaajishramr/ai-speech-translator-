@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 AI Speech Translator — A3 Project Worksheet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════
+           A3 PRINT SETUP (420mm × 297mm landscape)
+           ═══════════════════════════════════════════ */
+        @page {
+            size: A3 landscape;
+            margin: 0;
+        }
+
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #050a0e;
+            --bg-secondary: #0a1218;
+            --bg-card: #0d1a22;
+            --bg-card-alt: #112530;
+            --accent-blue: #38bdf8;
+            --accent-purple: #a78bfa;
+            --accent-cyan: #22d3ee;
+            --accent-green: #34d399;
+            --accent-orange: #fbbf24;
+            --accent-red: #f87171;
+            --accent-pink: #f472b6;
+            --text-primary: #ecfeff;
+            --text-secondary: #a5b4c4;
+            --text-muted: #5e7a8a;
+            --border: rgba(56, 189, 248, 0.1);
+            --gradient-main: linear-gradient(135deg, #0ea5e9, #22d3ee, #34d399);
+            --gradient-warm: linear-gradient(135deg, #fbbf24, #f59e0b, #f97316);
+        }
+
+        html {
+            font-size: 14px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            width: 420mm;
+            height: 297mm;
+            overflow: hidden;
+            position: relative;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* ═══════════════════════════════════════════
+           BACKGROUND DECORATION
+           ═══════════════════════════════════════════ */
+        .bg-pattern {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(14, 165, 233, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14, 165, 233, 0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-glow-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.12), transparent 70%);
+            top: -150px;
+            left: -100px;
+        }
+
+        .bg-glow-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(52, 211, 153, 0.08), transparent 70%);
+            bottom: -100px;
+            right: -50px;
+        }
+
+        .bg-glow-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.06), transparent 70%);
+            top: 50%;
+            left: 40%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Corner decorations */
+        .corner-accent {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: 1;
+        }
+
+        .corner-accent.tl {
+            top: 12mm;
+            left: 12mm;
+            border-top: 3px solid var(--accent-cyan);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 4px 0 0 0;
+        }
+
+        .corner-accent.tr {
+            top: 12mm;
+            right: 12mm;
+            border-top: 3px solid var(--accent-green);
+            border-right: 3px solid var(--accent-green);
+            border-radius: 0 4px 0 0;
+        }
+
+        .corner-accent.bl {
+            bottom: 12mm;
+            left: 12mm;
+            border-bottom: 3px solid var(--accent-orange);
+            border-left: 3px solid var(--accent-orange);
+            border-radius: 0 0 0 4px;
+        }
+
+        .corner-accent.br {
+            bottom: 12mm;
+            right: 12mm;
+            border-bottom: 3px solid var(--accent-blue);
+            border-right: 3px solid var(--accent-blue);
+            border-radius: 0 0 4px 0;
+        }
+
+        /* ═══════════════════════════════════════════
+           MAIN LAYOUT
+           ═══════════════════════════════════════════ */
+        .worksheet {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            padding: 14mm 16mm;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 10px;
+        }
+
+        /* ═══════════════════════════════════════════
+           TOP HEADER SECTION
+           ═══════════════════════════════════════════ */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-box {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-main);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .header-title .subtitle {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .header-badge.green { border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green); }
+        .header-badge.blue { border-color: rgba(59, 130, 246, 0.3); color: var(--accent-blue); }
+
+        .dept-info {
+            text-align: right;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .dept-info strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* ═══════════════════════════════════════════
+           MAIN CONTENT — 3 COLUMN LAYOUT
+           ═══════════════════════════════════════════ */
+        .content {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr 1fr;
+            gap: 12px;
+            min-height: 0;
+        }
+
+        /* ── SECTION CARD STYLES ── */
+        .section-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .section-title .icon {
+            font-size: 1rem;
+        }
+
+        .section-title .line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ═══════════════════════════════════════════
+           COLUMN 1: OVERVIEW + DEVICE + STATS
+           ═══════════════════════════════════════════ */
+        .col-1 {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Overview / Intro Card */
+        .intro-card::before { background: var(--accent-blue); }
+
+        .intro-text {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .intro-text strong {
+            color: var(--text-primary);
+        }
+
+        .cost-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.08));
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .cost-badge .price {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: var(--accent-green);
+        }
+
+        .cost-badge .vs {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .cost-badge .old-price {
+            font-size: 0.85rem;
+            color: var(--accent-red);
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .cost-badge .save {
+            font-size: 0.6rem;
+            font-weight: 800;
+            color: #000;
+            background: var(--accent-green);
+            padding: 3px 8px;
+            border-radius: 5px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .stat-box:nth-child(1)::before { background: var(--accent-blue); }
+        .stat-box:nth-child(2)::before { background: var(--accent-green); }
+        .stat-box:nth-child(3)::before { background: var(--accent-purple); }
+        .stat-box:nth-child(4)::before { background: var(--accent-cyan); }
+
+        .stat-icon {
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-box:nth-child(1) .stat-value { color: var(--accent-blue); }
+        .stat-box:nth-child(2) .stat-value { color: var(--accent-green); }
+        .stat-box:nth-child(3) .stat-value { color: var(--accent-purple); }
+        .stat-box:nth-child(4) .stat-value { color: var(--accent-cyan); }
+
+        .stat-label {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 1px;
+        }
+
+        /* Hardware Card */
+        .hardware-card::before { background: var(--accent-orange); }
+
+        .hw-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+        }
+
+        .hw-table th {
+            text-align: left;
+            padding: 5px 8px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hw-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+        }
+
+        .hw-table td:first-child {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .hw-table td:last-child {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--accent-orange);
+        }
+
+        .hw-total {
+            background: rgba(245, 158, 11, 0.08);
+            border-radius: 6px;
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .hw-total span:last-child {
+            color: var(--accent-orange);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        /* ═══════════════════════════════════════════
+           COLUMN 2: ARCHITECTURE + FEATURES
+           ═══════════════════════════════════════════ */
+        .col-2 {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Architecture Card */
+        .arch-card::before { background: var(--accent-purple); }
+
+        .arch-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .arch-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .arch-box::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .arch-device::before { background: var(--accent-green); }
+        .arch-pipeline::before { background: var(--accent-blue); }
+        .arch-output::before { background: var(--accent-cyan); }
+
+        .arch-icon {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .arch-device .arch-icon { background: rgba(16, 185, 129, 0.12); }
+        .arch-pipeline .arch-icon { background: rgba(59, 130, 246, 0.12); }
+        .arch-output .arch-icon { background: rgba(6, 182, 212, 0.12); }
+
+        .arch-text h4 {
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-bottom: 1px;
+        }
+
+        .arch-text p {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .arch-connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .arch-connector .conn-label {
+            font-size: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.1);
+            padding: 1px 8px;
+            border-radius: 4px;
+            margin: 0 6px;
+        }
+
+        /* Pipeline Card */
+        .pipeline-card::before { background: var(--accent-blue); }
+
+        .pipeline-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .pipeline-step::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .pipeline-step:nth-child(1)::before { background: var(--accent-blue); }
+        .pipeline-step:nth-child(2)::before { background: var(--accent-purple); }
+        .pipeline-step:nth-child(3)::before { background: var(--accent-cyan); }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+
+        .pipeline-step:nth-child(1) .step-num { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .pipeline-step:nth-child(2) .step-num { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .pipeline-step:nth-child(3) .step-num { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+
+        .step-info h4 {
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-bottom: 1px;
+        }
+
+        .step-info p {
+            font-size: 0.58rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .step-tech-badge {
+            margin-left: auto;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.52rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .pipeline-step:nth-child(1) .step-tech-badge { background: rgba(59, 130, 246, 0.12); color: var(--accent-blue); }
+        .pipeline-step:nth-child(2) .step-tech-badge { background: rgba(139, 92, 246, 0.12); color: var(--accent-purple); }
+        .pipeline-step:nth-child(3) .step-tech-badge { background: rgba(6, 182, 212, 0.12); color: var(--accent-cyan); }
+
+        /* Features Grid */
+        .features-card::before { background: var(--accent-cyan); }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+        }
+
+        .feature-icon {
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .feature-text {
+            font-size: 0.62rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        /* ═══════════════════════════════════════════
+           COLUMN 3: COMPARISON + TECH STACK + HOW IT WORKS
+           ═══════════════════════════════════════════ */
+        .col-3 {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Comparison Card */
+        .comparison-card::before { background: var(--accent-green); }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.68rem;
+        }
+
+        .compare-table th {
+            padding: 5px 8px;
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .compare-table th:last-child {
+            color: var(--accent-green);
+        }
+
+        .compare-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+        }
+
+        .compare-table td.label-cell {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .compare-table td.ours {
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        /* Tech Stack Card */
+        .tech-card::before { background: var(--accent-pink); }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 12px;
+            font-size: 0.64rem;
+        }
+
+        .tech-layer {
+            font-weight: 700;
+            color: var(--text-primary);
+            padding: 3px 0;
+            white-space: nowrap;
+        }
+
+        .tech-value {
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            padding: 3px 0;
+        }
+
+        /* Wiring Diagram */
+        .wiring-card::before { background: var(--accent-red); }
+
+        .wiring-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .wire-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+        }
+
+        .wire-pin {
+            font-size: 0.6rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--accent-red);
+            white-space: nowrap;
+        }
+
+        .wire-arrow {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        .wire-component {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* How It Works Card */
+        .how-card::before { background: var(--accent-green); }
+
+        .how-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .how-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 4px 0;
+        }
+
+        .how-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .how-text {
+            font-size: 0.63rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .how-text strong {
+            color: var(--text-primary);
+        }
+
+        /* Future Vision Card */
+        .future-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.06), rgba(59, 130, 246, 0.04));
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 12px;
+            padding: 10px 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .future-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-blue));
+        }
+
+        .future-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .future-header h3 {
+            font-size: 0.78rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .future-badge {
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--accent-purple);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .future-text {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .future-specs {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .future-spec {
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-radius: 5px;
+            padding: 3px 8px;
+            font-size: 0.52rem;
+            font-weight: 600;
+            color: var(--accent-purple);
+        }
+
+        /* ═══════════════════════════════════════════
+           FOOTER
+           ═══════════════════════════════════════════ */
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .team-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team-label {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+
+        .team-names {
+            display: flex;
+            gap: 8px;
+        }
+
+        .team-member {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        .footer-tech {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .tech-pill {
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-size: 0.55rem;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .footer-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .qr-box {
+            width: 52px;
+            height: 52px;
+            background: white;
+            border-radius: 8px;
+            padding: 3px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        .qr-box img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 5px;
+        }
+
+        .qr-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .qr-label {
+            font-size: 0.52rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .qr-label svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--text-secondary);
+        }
+
+        .qr-repo {
+            font-size: 0.58rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .qr-scan {
+            font-size: 0.45rem;
+            color: var(--text-muted);
+        }
+
+        /* Hallucination Filtering Highlight */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(139, 92, 246, 0.06));
+            border: 1px solid rgba(59, 130, 246, 0.12);
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-top: 6px;
+        }
+
+        .highlight-box .hl-title {
+            font-size: 0.58rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 3px;
+        }
+
+        .highlight-box p {
+            font-size: 0.58rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Divider line between sections */
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: var(--border);
+            margin: 2px 0;
+        }
+
+        /* BLE Protocol mini-table */
+        .ble-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.58rem;
+            margin-top: 6px;
+        }
+
+        .ble-table th {
+            padding: 3px 6px;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .ble-table td {
+            padding: 3px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+        }
+
+        .ble-table td:first-child {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Performance metrics row */
+        .perf-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .perf-item {
+            text-align: center;
+            padding: 6px 4px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+        }
+
+        .perf-item .perf-label {
+            font-size: 0.48rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 2px;
+        }
+
+        .perf-item .perf-val {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--accent-orange);
+        }
+
+        /* ═══════════════════════════════════════════
+           PRINT STYLES
+           ═══════════════════════════════════════════ */
+        @media print {
+            body {
+                width: 420mm;
+                height: 297mm;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        /* Screen preview scrollbar */
+        @media screen {
+            body {
+                margin: 20px auto;
+                box-shadow: 0 5px 40px rgba(0,0,0,0.5);
+                border-radius: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background decorations -->
+    <div class="bg-pattern"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+    <div class="corner-accent tl"></div>
+    <div class="corner-accent tr"></div>
+    <div class="corner-accent bl"></div>
+    <div class="corner-accent br"></div>
+
+    <div class="worksheet">
+
+        <!-- ═══════════════════ HEADER ═══════════════════ -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-box">🌐</div>
+                <div class="header-title">
+                    <h1>ESP32 AI Speech Translator</h1>
+                    <span class="subtitle">A Portable, Real-Time, AI-Powered Speech Translation Device Using Deep Learning</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <span class="header-badge green">✅ Working Prototype</span>
+                    <span class="header-badge blue">🎓 B.Tech CSE Project</span>
+                </div>
+                <div class="dept-info">
+                    <strong>Department of Computer Science & Engineering</strong><br>
+                    IEEE-Style Research Paper Available<br>
+                    Open Source • MIT License
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
+        <div class="content">
+
+            <!-- ── COLUMN 1: Overview + Stats + Hardware ── -->
+            <div class="col-1">
+
+                <!-- Intro / Overview -->
+                <div class="section-card intro-card" style="flex: 1;">
+                    <div class="section-title">
+                        <span class="icon">🔍</span>
+                        <span>Project Overview</span>
+                        <div class="line"></div>
+                    </div>
+                    <p class="intro-text">
+                        A <strong>pocket-sized, open-source</strong> speech translation device built around the <strong>ESP32 microcontroller</strong>. 
+                        It captures spoken audio, processes it through a <strong>3-stage AI pipeline</strong> 
+                        (Speech-to-Text → Translation → Text-to-Speech), and delivers translated audio through 
+                        <strong>Bluetooth earbuds</strong> — enabling real-time, hands-free multilingual communication.
+                    </p>
+                    <div class="cost-badge">
+                        <div>
+                            <span class="price">₹500</span>
+                            <span class="vs">vs</span>
+                            <span class="old-price">₹10,800+</span>
+                        </div>
+                        <span class="save">95% CHEAPER</span>
+                    </div>
+
+                    <div class="highlight-box" style="margin-top: 10px;">
+                        <div class="hl-title">🛡 Hallucination Rejection — 98%</div>
+                        <p>Multi-layer filtering: VAD pre-filtering, confidence thresholding, no-speech probability check, segment length filtering, and a curated blacklist of 30+ known Whisper hallucinations.</p>
+                    </div>
+                </div>
+
+                <!-- Key Stats -->
+                <div class="section-card" style="flex-shrink: 0;">
+                    <div class="section-title">
+                        <span class="icon">📊</span>
+                        <span>Performance Metrics</span>
+                        <div class="line"></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-icon">🌍</div>
+                            <div class="stat-value">100+</div>
+                            <div class="stat-label">Languages</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-icon">⚡</div>
+                            <div class="stat-value">3.8s</div>
+                            <div class="stat-label">Avg Latency</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-icon">🎯</div>
+                            <div class="stat-value">96%</div>
+                            <div class="stat-label">STT Accuracy</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-icon">🔋</div>
+                            <div class="stat-value">10.5h</div>
+                            <div class="stat-label">Battery Life</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hardware BOM -->
+                <div class="section-card hardware-card" style="flex-shrink: 0;">
+                    <div class="section-title">
+                        <span class="icon">🔧</span>
+                        <span>Hardware Bill of Materials</span>
+                        <div class="line"></div>
+                    </div>
+                    <table class="hw-table">
+                        <tr>
+                            <th>Component</th>
+                            <th>Purpose</th>
+                            <th>Cost</th>
+                        </tr>
+                        <tr>
+                            <td>ESP32 DevKit V1</td>
+                            <td>BLE Controller + Buttons</td>
+                            <td>₹290</td>
+                        </tr>
+                        <tr>
+                            <td>Push Buttons ×3</td>
+                            <td>Record / Replay / Previous</td>
+                            <td>₹25</td>
+                        </tr>
+                        <tr>
+                            <td>Soldering Wire</td>
+                            <td>Permanent Connections</td>
+                            <td>₹30</td>
+                        </tr>
+                        <tr>
+                            <td>Li-ion Battery</td>
+                            <td>Portable Power</td>
+                            <td>₹80</td>
+                        </tr>
+                        <tr>
+                            <td>Power Bank Module</td>
+                            <td>Charging + 5V Output</td>
+                            <td>₹60</td>
+                        </tr>
+                    </table>
+                    <div class="hw-total">
+                        <span>Total Cost</span>
+                        <span>~₹500</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── COLUMN 2: Architecture + Pipeline + Features ── -->
+            <div class="col-2">
+
+                <!-- System Architecture -->
+                <div class="section-card arch-card">
+                    <div class="section-title">
+                        <span class="icon">🏗</span>
+                        <span>System Architecture</span>
+                        <div class="line"></div>
+                    </div>
+                    <div class="arch-diagram">
+                        <div class="arch-box arch-device">
+                            <div class="arch-icon">📟</div>
+                            <div class="arch-text">
+                                <h4>ESP32 Device</h4>
+                                <p>3 GPIO buttons (Record, Replay, Previous) + LED status indicator. Acts as BLE GATT Server advertising as "TranslatorBtn".</p>
+                            </div>
+                        </div>
+                        <div class="arch-connector">
+                            ↓ <span class="conn-label">BLE 4.2 + HTTPS</span> ↓
+                        </div>
+                        <div class="arch-box arch-pipeline">
+                            <div class="arch-icon">🧠</div>
+                            <div class="arch-text">
+                                <h4>AI Processing Server</h4>
+                                <p>Flask HTTPS server running Faster-Whisper STT, Google Translate, and gTTS. Local or Cloud (HF Spaces).</p>
+                            </div>
+                        </div>
+                        <div class="arch-connector">
+                            ↓ <span class="conn-label">Base64 MP3</span> ↓
+                        </div>
+                        <div class="arch-box arch-output">
+                            <div class="arch-icon">🎧</div>
+                            <div class="arch-text">
+                                <h4>Audio Output</h4>
+                                <p>PWA web interface on phone plays translated audio through paired Bluetooth earbuds — private & hands-free.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Pipeline -->
+                <div class="section-card pipeline-card">
+                    <div class="section-title">
+                        <span class="icon">⚙️</span>
+                        <span>3-Stage AI Pipeline</span>
+                        <div class="line"></div>
+                    </div>
+                    <div class="pipeline-flow">
+                        <div class="pipeline-step">
+                            <div class="step-num">01</div>
+                            <div class="step-info">
+                                <h4>Speech → Text</h4>
+                                <p>On-device STT with VAD filtering, INT8 quantization, and hallucination rejection</p>
+                            </div>
+                            <span class="step-tech-badge">Faster-Whisper</span>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="step-num">02</div>
+                            <div class="step-info">
+                                <h4>Text → Translation</h4>
+                                <p>Auto-detect source language, translate to 100+ target languages instantly</p>
+                            </div>
+                            <span class="step-tech-badge">Google Translate</span>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="step-num">03</div>
+                            <div class="step-info">
+                                <h4>Text → Speech</h4>
+                                <p>Language-aware voice synthesis → MP3 Base64 → Bluetooth earbuds output</p>
+                            </div>
+                            <span class="step-tech-badge">gTTS</span>
+                        </div>
+                    </div>
+
+                    <div class="perf-grid">
+                        <div class="perf-item">
+                            <div class="perf-label">STT</div>
+                            <div class="perf-val">~2.0s</div>
+                        </div>
+                        <div class="perf-item">
+                            <div class="perf-label">Translate</div>
+                            <div class="perf-val">~0.5s</div>
+                        </div>
+                        <div class="perf-item">
+                            <div class="perf-label">TTS</div>
+                            <div class="perf-val">~0.8s</div>
+                        </div>
+                        <div class="perf-item">
+                            <div class="perf-label">Network</div>
+                            <div class="perf-val">~0.5s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Features -->
+                <div class="section-card features-card">
+                    <div class="section-title">
+                        <span class="icon">✨</span>
+                        <span>Key Features</span>
+                        <div class="line"></div>
+                    </div>
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <span class="feature-icon">🔵</span>
+                            <span class="feature-text">BLE Push-to-Talk Trigger</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🎧</span>
+                            <span class="feature-text">Bluetooth Earbuds Output</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🔍</span>
+                            <span class="feature-text">Auto Language Detection</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🔁</span>
+                            <span class="feature-text">Instant Replay & History</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">📲</span>
+                            <span class="feature-text">Installable PWA</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">☁️</span>
+                            <span class="feature-text">Cloud Deployment (HF)</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🛡</span>
+                            <span class="feature-text">98% Hallucination Filter</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">📱</span>
+                            <span class="feature-text">Virtual Hold-to-Talk</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── COLUMN 3: Comparison + Tech Stack + GPIO + Future ── -->
+            <div class="col-3">
+
+                <!-- vs Commercial -->
+                <div class="section-card comparison-card">
+                    <div class="section-title">
+                        <span class="icon">📊</span>
+                        <span>vs Commercial Devices</span>
+                        <div class="line"></div>
+                    </div>
+                    <table class="compare-table">
+                        <tr>
+                            <th>Metric</th>
+                            <th>Commercial</th>
+                            <th>Our Device</th>
+                        </tr>
+                        <tr>
+                            <td class="label-cell">💰 Cost</td>
+                            <td>₹8,000 – ₹25,000</td>
+                            <td class="ours">₹500</td>
+                        </tr>
+                        <tr>
+                            <td class="label-cell">🌍 Languages</td>
+                            <td>80 – 155</td>
+                            <td class="ours">100+</td>
+                        </tr>
+                        <tr>
+                            <td class="label-cell">🎧 BT Earbuds</td>
+                            <td>❌ No</td>
+                            <td class="ours">✅ Yes</td>
+                        </tr>
+                        <tr>
+                            <td class="label-cell">🙌 Hands-Free</td>
+                            <td>❌ No</td>
+                            <td class="ours">✅ Physical Buttons</td>
+                        </tr>
+                        <tr>
+                            <td class="label-cell">🔓 Open Source</td>
+                            <td>❌ No</td>
+                            <td class="ours">✅ MIT License</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Tech Stack -->
+                <div class="section-card tech-card">
+                    <div class="section-title">
+                        <span class="icon">🛠</span>
+                        <span>Technology Stack</span>
+                        <div class="line"></div>
+                    </div>
+                    <div class="tech-grid">
+                        <span class="tech-layer">MCU</span>
+                        <span class="tech-value">ESP32 (Xtensa LX6, BLE 4.2)</span>
+                        <span class="tech-layer">Firmware</span>
+                        <span class="tech-value">C++ / Arduino Framework</span>
+                        <span class="tech-layer">Backend</span>
+                        <span class="tech-value">Python 3.10+ / Flask</span>
+                        <span class="tech-layer">STT</span>
+                        <span class="tech-value">Faster-Whisper (CTranslate2)</span>
+                        <span class="tech-layer">Translation</span>
+                        <span class="tech-value">Google Translate (deep-translator)</span>
+                        <span class="tech-layer">TTS</span>
+                        <span class="tech-value">gTTS (Google Text-to-Speech)</span>
+                        <span class="tech-layer">Audio</span>
+                        <span class="tech-value">pydub + FFmpeg</span>
+                        <span class="tech-layer">Frontend</span>
+                        <span class="tech-value">HTML/CSS/JS PWA</span>
+                        <span class="tech-layer">BLE API</span>
+                        <span class="tech-value">Web Bluetooth API</span>
+                        <span class="tech-layer">Deploy</span>
+                        <span class="tech-value">Docker / HF Spaces</span>
+                    </div>
+                </div>
+
+                <!-- GPIO Wiring -->
+                <div class="section-card wiring-card">
+                    <div class="section-title">
+                        <span class="icon">⚡</span>
+                        <span>ESP32 GPIO Wiring</span>
+                        <div class="line"></div>
+                    </div>
+                    <div class="wiring-grid">
+                        <div class="wire-item">
+                            <span class="wire-pin">GPIO 4</span>
+                            <span class="wire-arrow">→</span>
+                            <span class="wire-component">🔴 Record Button</span>
+                        </div>
+                        <div class="wire-item">
+                            <span class="wire-pin">GPIO 5</span>
+                            <span class="wire-arrow">→</span>
+                            <span class="wire-component">🔁 Replay Button</span>
+                        </div>
+                        <div class="wire-item">
+                            <span class="wire-pin">GPIO 16</span>
+                            <span class="wire-arrow">→</span>
+                            <span class="wire-component">⏮ Previous Button</span>
+                        </div>
+                        <div class="wire-item">
+                            <span class="wire-pin">GPIO 2</span>
+                            <span class="wire-arrow">→</span>
+                            <span class="wire-component">💡 Status LED</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.5rem; color: var(--text-muted); margin-top: 5px; text-align: center;">All connections are soldered • Buttons use INPUT_PULLUP • Battery powered via power bank module</p>
+                </div>
+
+                <!-- How to Use -->
+                <div class="section-card how-card" style="flex:1;">
+                    <div class="section-title">
+                        <span class="icon">🚀</span>
+                        <span>How to Use</span>
+                        <div class="line"></div>
+                    </div>
+                    <div class="how-steps">
+                        <div class="how-step">
+                            <div class="how-num">1</div>
+                            <div class="how-text"><strong>Flash ESP32</strong> firmware via Arduino IDE</div>
+                        </div>
+                        <div class="how-step">
+                            <div class="how-num">2</div>
+                            <div class="how-text"><strong>Start AI Server</strong> — <code style="font-size:0.55rem; color: var(--accent-cyan);">python server.py</code></div>
+                        </div>
+                        <div class="how-step">
+                            <div class="how-num">3</div>
+                            <div class="how-text"><strong>Pair BT earbuds</strong> to phone, open Chrome PWA</div>
+                        </div>
+                        <div class="how-step">
+                            <div class="how-num">4</div>
+                            <div class="how-text"><strong>Press & hold</strong> record button → Speak → Release</div>
+                        </div>
+                        <div class="how-step">
+                            <div class="how-num">5</div>
+                            <div class="how-text"><strong>Hear translation</strong> through earbuds in ~3.8 seconds! 🎧</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Future Vision -->
+                <div class="future-card">
+                    <div class="future-header">
+                        <span style="font-size: 1rem;">🔮</span>
+                        <h3>Future Vision: Smartwatch Translator</h3>
+                        <span class="future-badge">Next Gen</span>
+                    </div>
+                    <p class="future-text">
+                        Wrist-mounted AI translator with built-in MEMS mic, haptic feedback, ESP32-S3 with TinyML Whisper for on-device STT, and 1.3" round LCD display. Est. cost: ₹1,200–₹1,800 (still 85% cheaper).
+                    </p>
+                    <div class="future-specs">
+                        <span class="future-spec">ESP32-S3</span>
+                        <span class="future-spec">TinyML</span>
+                        <span class="future-spec">MEMS Mic</span>
+                        <span class="future-spec">Haptic</span>
+                        <span class="future-spec">BLE 5.0</span>
+                        <span class="future-spec">Round LCD</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ FOOTER ═══════════════════ -->
+        <footer class="footer">
+            <div class="footer-left">
+                <div class="team-section">
+                    <span class="team-label">Team</span>
+                    <div class="team-names">
+                        <span class="team-member">Balamurugan S</span>
+                        <span class="team-member">Siva Ajish Ram</span>
+                        <span class="team-member">Hari Karthikeyan</span>
+                    </div>
+                </div>
+                <div class="footer-tech">
+                    <span class="tech-pill">ESP32</span>
+                    <span class="tech-pill">Python</span>
+                    <span class="tech-pill">Flask</span>
+                    <span class="tech-pill">Whisper AI</span>
+                    <span class="tech-pill">BLE</span>
+                    <span class="tech-pill">PWA</span>
+                    <span class="tech-pill">Docker</span>
+                </div>
+            </div>
+            <div class="footer-right">
+                <div class="qr-info">
+                    <div class="qr-label">
+                        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                        Open Source
+                    </div>
+                    <div class="qr-repo">sivaajishramr/ai-speech-translator-</div>
+                    <div class="qr-scan">Scan QR → View Source Code</div>
+                </div>
+                <div class="qr-box">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://github.com/sivaajishramr/ai-speech-translator-" alt="GitHub QR Code">
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
