@@ -671,7 +671,8 @@
         }
 
         function go(idx) {
-            if (transitioning || idx === cur || idx < 0 || idx >= TOTAL) return;
+            if (transitioning || idx === cur) return;
+            idx = ((idx % TOTAL) + TOTAL) % TOTAL; // wrap around
             transitioning = true;
             clearTimeout(autoTmr);
             window.speechSynthesis.cancel();
@@ -690,7 +691,7 @@
             }, 450);
         }
 
-        function next() { if (cur < TOTAL - 1) go(cur + 1); }
+        function next() { go((cur + 1) % TOTAL); }
 
         function speak(i) {
             window.speechSynthesis.cancel();
@@ -701,13 +702,13 @@
                 || v.find(x => x.lang.startsWith('en-US'))
                 || v.find(x => x.lang.startsWith('en'));
             if (pref) u.voice = pref;
-            u.onend = () => { setTimeout(() => { if (cur < TOTAL - 1) next(); }, 1200); };
+            u.onend = () => { setTimeout(() => { next(); }, 1200); };
             window.speechSynthesis.speak(u);
         }
 
         function autoAdv() {
             clearTimeout(autoTmr);
-            autoTmr = setTimeout(() => { if (cur < TOTAL - 1) next(); }, 7000);
+            autoTmr = setTimeout(() => { next(); }, 7000);
         }
 
         // Controls
