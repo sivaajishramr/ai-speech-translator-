@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 AI Speech Translator — Showcase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════
+           RESET & BASE
+           ═══════════════════════════════════════════ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a26;
+            --bg-card-hover: #22222f;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(255, 255, 255, 0.06);
+            --glow-blue: rgba(59, 130, 246, 0.15);
+            --glow-purple: rgba(139, 92, 246, 0.15);
+            --gradient-main: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+            --gradient-card: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ═══════════════════════════════════════════
+           BACKGROUND
+           ═══════════════════════════════════════════ */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        .bg-glow-1 {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.08), transparent 70%);
+            top: -200px;
+            left: -100px;
+            border-radius: 50%;
+            z-index: 0;
+            animation: floatGlow 8s ease-in-out infinite;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.06), transparent 70%);
+            bottom: -200px;
+            right: -100px;
+            border-radius: 50%;
+            z-index: 0;
+            animation: floatGlow 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes floatGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, 20px) scale(1.1); }
+        }
+
+        /* ═══════════════════════════════════════════
+           MAIN LAYOUT — iPad Landscape Optimized
+           ═══════════════════════════════════════════ */
+        .showcase {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 36px;
+            gap: 16px;
+        }
+
+        /* ── TOP BAR ── */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-main);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .brand-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .top-badges {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .badge-green { border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green); }
+        .badge-blue { border-color: rgba(59, 130, 246, 0.3); color: var(--accent-blue); }
+        .badge-purple { border-color: rgba(139, 92, 246, 0.3); color: var(--accent-purple); }
+
+        /* ── MAIN CONTENT ── */
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            min-height: 0;
+        }
+
+        /* ── LEFT PANEL — Hero + Device ── */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hero-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .hero-title .highlight {
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-tagline {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+
+        .hero-cost {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .hero-cost .price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent-green);
+        }
+
+        .hero-cost .vs {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-cost .old-price {
+            font-size: 0.9rem;
+            color: var(--accent-red);
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .hero-cost .save {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.15);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .device-showcase {
+            width: 250px;
+            height: 300px;
+            flex-shrink: 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 800px;
+            cursor: grab;
+        }
+
+        .device-showcase:active {
+            cursor: grabbing;
+        }
+
+        .device-glow {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.08), transparent 70%);
+            border-radius: 50%;
+            animation: pulse 3s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* ── 3D DEVICE MODEL ── */
+        .device-3d-wrapper {
+            position: relative;
+            z-index: 2;
+            width: 130px;
+            height: 200px;
+            transform-style: preserve-3d;
+            animation: deviceFloat 6s ease-in-out infinite, deviceAutoRotate 12s ease-in-out infinite;
+            transition: transform 0.1s ease-out;
+        }
+
+        .device-3d-wrapper.dragging {
+            animation: none;
+        }
+
+        @keyframes deviceFloat {
+            0%, 100% { transform: translateY(0) rotateX(-15deg) rotateY(-25deg); }
+            50% { transform: translateY(-10px) rotateX(-15deg) rotateY(-25deg); }
+        }
+
+        @keyframes deviceAutoRotate {
+            0% { transform: translateY(0) rotateX(-15deg) rotateY(-25deg); }
+            25% { transform: translateY(-8px) rotateX(-10deg) rotateY(-15deg); }
+            50% { transform: translateY(-10px) rotateX(-20deg) rotateY(-35deg); }
+            75% { transform: translateY(-5px) rotateX(-12deg) rotateY(-20deg); }
+            100% { transform: translateY(0) rotateX(-15deg) rotateY(-25deg); }
+        }
+
+        .device-face {
+            position: absolute;
+            backface-visibility: hidden;
+        }
+
+        /* Front Face */
+        .device-front {
+            width: 130px;
+            height: 200px;
+            background: linear-gradient(145deg, #f0eee9, #e8e4de, #ddd9d2);
+            border-radius: 6px;
+            transform: translateZ(25px);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 22px;
+            gap: 0;
+        }
+
+        /* Buttons container on front */
+        .device-buttons {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .device-btn {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            box-shadow:
+                0 2px 4px rgba(0,0,0,0.4),
+                inset 0 1px 1px rgba(255,255,255,0.1),
+                0 0 0 2px rgba(0,0,0,0.15);
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .device-btn:hover {
+            transform: scale(0.92);
+            box-shadow:
+                0 1px 2px rgba(0,0,0,0.4),
+                inset 0 1px 1px rgba(255,255,255,0.1),
+                0 0 0 2px rgba(0,0,0,0.15);
+        }
+
+        .device-btn.rec-btn {
+            background: linear-gradient(145deg, #333, #1c1c1c);
+        }
+
+        .device-led {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #5eff8a, #00c853, #008f3a);
+            box-shadow:
+                0 0 6px rgba(0, 200, 83, 0.6),
+                0 0 15px rgba(0, 200, 83, 0.3),
+                inset 0 -1px 2px rgba(0,0,0,0.3);
+            animation: ledBlink 2s ease-in-out infinite;
+        }
+
+        @keyframes ledBlink {
+            0%, 100% { box-shadow: 0 0 6px rgba(0, 200, 83, 0.6), 0 0 15px rgba(0, 200, 83, 0.3); }
+            50% { box-shadow: 0 0 10px rgba(0, 200, 83, 0.9), 0 0 25px rgba(0, 200, 83, 0.5), 0 0 40px rgba(0, 200, 83, 0.2); }
+        }
+
+        /* Button labels */
+        .device-btn-labels {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            align-items: center;
+        }
+
+        .device-btn-label {
+            font-size: 5px;
+            font-weight: 700;
+            color: rgba(80, 75, 70, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            width: 18px;
+            text-align: center;
+        }
+
+        .device-btn-label.led-label {
+            width: 8px;
+        }
+
+        /* ESP32 text on front */
+        .device-label-main {
+            margin-top: auto;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .device-label-main .label-title {
+            font-size: 7px;
+            font-weight: 800;
+            color: rgba(80, 75, 70, 0.35);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .device-label-main .label-sub {
+            font-size: 5px;
+            color: rgba(80, 75, 70, 0.25);
+            letter-spacing: 0.1em;
+            margin-top: 2px;
+        }
+
+        /* Back Face */
+        .device-back {
+            width: 130px;
+            height: 200px;
+            background: linear-gradient(145deg, #e0dcd6, #d5d0ca);
+            border-radius: 6px;
+            transform: translateZ(-25px) rotateY(180deg);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .device-back-label {
+            font-size: 6px;
+            font-weight: 700;
+            color: rgba(80, 75, 70, 0.3);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .device-back-usb {
+            width: 18px;
+            height: 8px;
+            border-radius: 2px;
+            background: linear-gradient(to bottom, #888, #666);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* Top Face */
+        .device-top {
+            width: 130px;
+            height: 50px;
+            background: linear-gradient(180deg, #f2efea, #e8e4de);
+            top: -50px;
+            transform-origin: center bottom;
+            transform: rotateX(90deg);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        /* Bottom Face */
+        .device-bottom {
+            width: 130px;
+            height: 50px;
+            background: linear-gradient(0deg, #d8d4ce, #ccc8c1);
+            top: 150px;
+            transform-origin: center bottom;
+            transform: rotateX(-90deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .device-usb-port {
+            width: 20px;
+            height: 8px;
+            border-radius: 2px;
+            background: linear-gradient(to bottom, #777, #555);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Left Face */
+        .device-left {
+            width: 50px;
+            height: 200px;
+            background: linear-gradient(90deg, #ddd9d3, #e5e1db);
+            left: -50px;
+            transform-origin: right center;
+            transform: rotateY(-90deg);
+        }
+
+        /* Right Face */
+        .device-right {
+            width: 50px;
+            height: 200px;
+            background: linear-gradient(-90deg, #e2ded8, #dad6d0);
+            left: 130px;
+            transform-origin: left center;
+            transform: rotateY(90deg);
+        }
+
+        /* 3D Shadow on ground */
+        .device-shadow {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.25), transparent 70%);
+            border-radius: 50%;
+            filter: blur(8px);
+            animation: shadowPulse 6s ease-in-out infinite;
+        }
+
+        @keyframes shadowPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+            50% { transform: translateX(-50%) scale(0.85); opacity: 0.3; }
+        }
+
+        /* Hover hint text */
+        .device-hint {
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            opacity: 0.5;
+            white-space: nowrap;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: opacity 0.3s;
+        }
+
+        .device-showcase:hover .device-hint {
+            opacity: 0;
+        }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 10px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            border-radius: 2px 2px 0 0;
+        }
+
+        .stat-card:nth-child(1)::before { background: var(--accent-blue); }
+        .stat-card:nth-child(2)::before { background: var(--accent-green); }
+        .stat-card:nth-child(3)::before { background: var(--accent-purple); }
+        .stat-card:nth-child(4)::before { background: var(--accent-cyan); }
+
+        .stat-icon {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-card:nth-child(1) .stat-value { color: var(--accent-blue); }
+        .stat-card:nth-child(2) .stat-value { color: var(--accent-green); }
+        .stat-card:nth-child(3) .stat-value { color: var(--accent-purple); }
+        .stat-card:nth-child(4) .stat-value { color: var(--accent-cyan); }
+
+        .stat-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 2px;
+        }
+
+        /* ── RIGHT PANEL ── */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        /* ── ARCHITECTURE CARD ── */
+        .arch-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .section-header .icon {
+            font-size: 1rem;
+        }
+
+        .section-header h2 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .section-header .line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Pipeline Steps */
+        .pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: visible;
+        }
+
+        .pipeline-step:hover {
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateX(4px);
+        }
+
+        .pipeline-step::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+        }
+
+        .pipeline-step:nth-child(1)::before { background: var(--accent-blue); }
+        .pipeline-step:nth-child(2) { }
+        .pipeline-step:nth-child(2)::before { background: var(--accent-purple); }
+        .pipeline-step:nth-child(3)::before { background: var(--accent-cyan); }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .pipeline-step:nth-child(1) .step-num {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+        .pipeline-step:nth-child(2) .step-num {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+        }
+        .pipeline-step:nth-child(3) .step-num {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--accent-cyan);
+        }
+
+        .step-content h3 {
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .step-content p {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .step-tech {
+            margin-left: auto;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.55rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .pipeline-step:nth-child(1) .step-tech {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+        .pipeline-step:nth-child(2) .step-tech {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+        }
+        .pipeline-step:nth-child(3) .step-tech {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+        }
+
+        .pipeline-arrow {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: -4px 0;
+        }
+
+        /* ── FEATURES GRID ── */
+        .features-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            flex-shrink: 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .feature-text {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        /* ── COMPARISON ROW ── */
+        .comparison-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            flex-shrink: 0;
+        }
+
+        .comparison-table {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 0;
+            font-size: 0.65rem;
+        }
+
+        .comp-header {
+            padding: 4px 10px;
+            font-weight: 700;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comp-header:last-child {
+            color: var(--accent-green);
+        }
+
+        .comp-cell {
+            padding: 4px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+        }
+
+        .comp-cell.ours {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .comp-cell.label-cell {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* ── BOTTOM BAR ── */
+        .bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 0;
+            flex-shrink: 0;
+        }
+
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .team-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .team-names {
+            display: flex;
+            gap: 12px;
+        }
+
+        .team-name {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        .tech-stack {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .tech-pill {
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.6rem;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        /* ═══════════════════════════════════════════
+           ANIMATIONS
+           ═══════════════════════════════════════════ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .left-panel { animation: fadeInLeft 0.8s ease-out; }
+        .right-panel { animation: fadeInRight 0.8s ease-out 0.2s both; }
+        .top-bar { animation: fadeInUp 0.6s ease-out; }
+        .bottom-bar { animation: fadeInUp 0.6s ease-out 0.4s both; }
+
+        .stat-card:nth-child(1) { animation: scaleIn 0.5s ease-out 0.3s both; }
+        .stat-card:nth-child(2) { animation: scaleIn 0.5s ease-out 0.4s both; }
+        .stat-card:nth-child(3) { animation: scaleIn 0.5s ease-out 0.5s both; }
+        .stat-card:nth-child(4) { animation: scaleIn 0.5s ease-out 0.6s both; }
+
+        .pipeline-step:nth-child(1) { animation: fadeInLeft 0.5s ease-out 0.5s both; }
+        .pipeline-step:nth-child(2) { animation: fadeInLeft 0.5s ease-out 0.6s both; }
+        .pipeline-step:nth-child(3) { animation: fadeInLeft 0.5s ease-out 0.7s both; }
+
+        /* ── LIVE INDICATOR ── */
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            display: inline-block;
+            animation: livePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+            50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE — Smaller iPads
+           ═══════════════════════════════════════════ */
+        @media (max-height: 700px) {
+            .showcase { padding: 12px 28px; gap: 10px; }
+            .hero-title { font-size: 1.6rem; }
+            .pipeline-step { padding: 8px 12px; }
+            .stats-row { gap: 8px; }
+            .stat-card { padding: 8px; }
+            .stat-value { font-size: 1rem; }
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+           CLICKABLE INFO INDICATORS
+           ═══════════════════════════════════════════ */
+        .info-hint {
+            font-size: 0.5rem;
+            color: var(--accent-cyan);
+            opacity: 0;
+            transition: opacity 0.3s;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            position: absolute;
+            bottom: 3px;
+            right: 6px;
+        }
+
+        .info-hint-inline {
+            font-size: 0.5rem;
+            color: var(--accent-cyan);
+            opacity: 0;
+            transition: opacity 0.3s;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .stat-card:hover .info-hint,
+        .pipeline-step:hover .info-hint-inline,
+        .feature-item:hover .info-hint-inline {
+            opacity: 1;
+        }
+
+        .info-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* ═══════════════════════════════════════════
+           INFO PANEL (SLIDE-IN OVERLAY)
+           ═══════════════════════════════════════════ */
+        .info-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+
+        .info-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .info-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+
+        .info-panel {
+            position: relative;
+            z-index: 1;
+            width: 520px;
+            max-height: 80vh;
+            background: linear-gradient(145deg, rgba(26, 26, 38, 0.98), rgba(18, 18, 26, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 28px 32px;
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1);
+            overflow-y: auto;
+        }
+
+        .info-overlay.active .info-panel {
+            transform: translateY(0) scale(1);
+        }
+
+        .info-panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .info-panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-panel-title .icon {
+            font-size: 1.5rem;
+        }
+
+        .info-panel-title h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .info-panel-title .tag {
+            font-size: 0.55rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-left: 6px;
+        }
+
+        .tag-blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .tag-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .tag-cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+        .tag-green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .tag-orange { background: rgba(245, 158, 11, 0.15); color: var(--accent-orange); }
+
+        .info-close-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-muted);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .info-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .info-panel-body {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .info-panel-body p {
+            margin-bottom: 12px;
+        }
+
+        .info-panel-body strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .info-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 14px 0;
+        }
+
+        .info-detail-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .info-detail-item .detail-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 3px;
+        }
+
+        .info-detail-item .detail-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .info-highlight {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin: 12px 0;
+            font-size: 0.75rem;
+            line-height: 1.6;
+        }
+
+        .info-highlight .hl-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        /* ═══════════════════════════════════════════
+           FUTURE VISION CARD
+           ═══════════════════════════════════════════ */
+        .future-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.08), rgba(59, 130, 246, 0.05));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 14px;
+            padding: 10px 16px;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .future-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-blue));
+        }
+
+        .future-card:hover {
+            border-color: rgba(139, 92, 246, 0.4);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(236, 72, 153, 0.1), rgba(59, 130, 246, 0.08));
+            transform: translateY(-1px);
+        }
+
+        .future-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .future-watch {
+            width: 48px;
+            height: 56px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .watch-body {
+            width: 38px;
+            height: 44px;
+            background: linear-gradient(145deg, #2a2a3a, #1a1a28);
+            border-radius: 10px;
+            position: absolute;
+            top: 6px;
+            left: 5px;
+            box-shadow:
+                0 2px 8px rgba(0,0,0,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.1),
+                0 0 0 1.5px rgba(139, 92, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .watch-screen {
+            width: 30px;
+            height: 36px;
+            border-radius: 7px;
+            background: linear-gradient(180deg, #0f0f1a, #16162a);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 3px;
+        }
+
+        .watch-wave {
+            display: flex;
+            gap: 1.5px;
+            align-items: flex-end;
+            height: 10px;
+        }
+
+        .watch-wave-bar {
+            width: 2px;
+            background: var(--accent-purple);
+            border-radius: 1px;
+            animation: watchWave 1.2s ease-in-out infinite;
+        }
+
+        .watch-wave-bar:nth-child(1) { height: 4px; animation-delay: 0s; }
+        .watch-wave-bar:nth-child(2) { height: 8px; animation-delay: 0.15s; }
+        .watch-wave-bar:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+        .watch-wave-bar:nth-child(4) { height: 10px; animation-delay: 0.45s; }
+        .watch-wave-bar:nth-child(5) { height: 5px; animation-delay: 0.6s; }
+
+        @keyframes watchWave {
+            0%, 100% { transform: scaleY(0.4); }
+            50% { transform: scaleY(1); }
+        }
+
+        .watch-text {
+            font-size: 3px;
+            font-weight: 700;
+            color: rgba(139, 92, 246, 0.8);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .watch-band-top, .watch-band-bottom {
+            width: 24px;
+            height: 8px;
+            background: linear-gradient(to bottom, #333, #222);
+            border-radius: 3px;
+            position: absolute;
+            left: 12px;
+        }
+
+        .watch-band-top { top: 0; }
+        .watch-band-bottom { bottom: 0; }
+
+        .watch-crown {
+            width: 4px;
+            height: 6px;
+            background: linear-gradient(to bottom, #555, #333);
+            border-radius: 1px;
+            position: absolute;
+            right: 2px;
+            top: 23px;
+        }
+
+        .future-text h3 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .future-text p {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .future-badge {
+            margin-left: auto;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+            white-space: nowrap;
+            flex-shrink: 0;
+            animation: futurePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes futurePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.2); }
+            50% { box-shadow: 0 0 0 4px rgba(139, 92, 246, 0); }
+        }
+
+        /* ═══════════════════════════════════════════
+           GITHUB QR CODE
+           ═══════════════════════════════════════════ */
+        .qr-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .qr-card {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        .qr-card img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .qr-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .qr-label {
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .qr-label svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--text-secondary);
+        }
+
+        .qr-repo {
+            font-size: 0.6rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px;
+        }
+
+        .qr-scan {
+            font-size: 0.45rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="showcase">
+        <!-- ── TOP BAR ── -->
+        <header class="top-bar">
+            <div class="brand">
+                <div class="brand-icon">🌐</div>
+                <div>
+                    <div class="brand-text">ESP32 AI Speech Translator</div>
+                    <div class="brand-sub">Portable • Real-Time • Open Source</div>
+                </div>
+            </div>
+            <div class="top-badges">
+                <span class="badge badge-green"><span class="live-dot"></span> Live Demo</span>
+                <span class="badge badge-blue">🎓 B.Tech CSE</span>
+                <span class="badge badge-purple">📄 IEEE Paper</span>
+            </div>
+        </header>
+
+        <!-- ── MAIN CONTENT ── -->
+        <div class="main-content">
+
+            <!-- ── LEFT PANEL ── -->
+            <div class="left-panel">
+                <div class="hero-section">
+                    <div class="hero-text">
+                        <h1 class="hero-title">
+                            Speak Any Language.<br>
+                            <span class="highlight">Hear It Translated.</span>
+                        </h1>
+                        <p class="hero-tagline">
+                            A pocket-sized, AI-powered speech translator built with ESP32 & deep learning.
+                            100+ languages. 3.8s latency. Push-to-talk simplicity.
+                        </p>
+                        <div class="hero-cost">
+                            <div>
+                                <span class="price">₹440</span>
+                                <span class="vs">vs</span>
+                                <span class="old-price">₹10,800+</span>
+                            </div>
+                            <span class="save">95% CHEAPER</span>
+                        </div>
+                        <div class="qr-section">
+                            <div class="qr-card">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://github.com/sivaajishramr/ai-speech-translator-" alt="GitHub QR">
+                            </div>
+                            <div class="qr-info">
+                                <div class="qr-label">
+                                    <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                                    Open Source
+                                </div>
+                                <div class="qr-repo">sivaajishramr/ai-speech-translator-</div>
+                                <div class="qr-scan">Scan to view source code</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="device-showcase" id="deviceShowcase">
+                        <div class="device-glow"></div>
+                        <div class="device-3d-wrapper" id="device3d">
+                            <!-- Front -->
+                            <div class="device-face device-front">
+                                <div class="device-buttons">
+                                    <div class="device-led"></div>
+                                    <div class="device-btn rec-btn"></div>
+                                    <div class="device-btn"></div>
+                                    <div class="device-btn"></div>
+                                </div>
+                                <div class="device-btn-labels">
+                                    <div class="device-btn-label led-label">LED</div>
+                                    <div class="device-btn-label">REC</div>
+                                    <div class="device-btn-label">RPL</div>
+                                    <div class="device-btn-label">PRV</div>
+                                </div>
+                                <div class="device-label-main">
+                                    <div class="label-title">AI Translator</div>
+                                    <div class="label-sub">ESP32 • BLE</div>
+                                </div>
+                            </div>
+                            <!-- Back -->
+                            <div class="device-face device-back">
+                                <div class="device-back-label">ESP32</div>
+                                <div class="device-back-label" style="font-size:5px; opacity:0.5;">DevKit V1</div>
+                            </div>
+                            <!-- Top -->
+                            <div class="device-face device-top"></div>
+                            <!-- Bottom -->
+                            <div class="device-face device-bottom">
+                                <div class="device-usb-port"></div>
+                            </div>
+                            <!-- Left -->
+                            <div class="device-face device-left"></div>
+                            <!-- Right -->
+                            <div class="device-face device-right"></div>
+                        </div>
+                        <div class="device-shadow"></div>
+                        <div class="device-hint">↔ Drag to rotate</div>
+                    </div>
+                </div>
+
+                <!-- ── STATS ── -->
+                <div class="stats-row">
+                    <div class="stat-card" data-info="languages">
+                        <div class="stat-icon">🌍</div>
+                        <div class="stat-value">100+</div>
+                        <div class="stat-label">Languages</div>
+                        <span class="info-hint"><span class="info-dot"></span>Tap</span>
+                    </div>
+                    <div class="stat-card" data-info="latency">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-value">3.8s</div>
+                        <div class="stat-label">Avg Latency</div>
+                        <span class="info-hint"><span class="info-dot"></span>Tap</span>
+                    </div>
+                    <div class="stat-card" data-info="accuracy">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value">96%</div>
+                        <div class="stat-label">Accuracy</div>
+                        <span class="info-hint"><span class="info-dot"></span>Tap</span>
+                    </div>
+                    <div class="stat-card" data-info="battery">
+                        <div class="stat-icon">🔋</div>
+                        <div class="stat-value">10.5h</div>
+                        <div class="stat-label">Battery Life</div>
+                        <span class="info-hint"><span class="info-dot"></span>Tap</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── RIGHT PANEL ── -->
+            <div class="right-panel">
+
+                <!-- Architecture -->
+                <div class="arch-card">
+                    <div class="section-header">
+                        <span class="icon">⚙️</span>
+                        <h2>3-Stage AI Pipeline</h2>
+                        <div class="line"></div>
+                    </div>
+                    <div class="pipeline">
+                        <div class="pipeline-step" data-info="stt">
+                            <div class="step-num">01</div>
+                            <div class="step-content">
+                                <h3>Speech → Text</h3>
+                                <p>On-device STT with VAD filtering & hallucination rejection (98%)</p>
+                            </div>
+                            <span class="step-tech">Faster-Whisper</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                        <div class="pipeline-step" data-info="translate">
+                            <div class="step-num">02</div>
+                            <div class="step-content">
+                                <h3>Text → Translation</h3>
+                                <p>Auto-detect source, translate to 100+ target languages</p>
+                            </div>
+                            <span class="step-tech">Google Translate</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                        <div class="pipeline-step" data-info="tts">
+                            <div class="step-num">03</div>
+                            <div class="step-content">
+                                <h3>Text → Speech</h3>
+                                <p>Language-aware voice synthesis → Bluetooth earbuds output</p>
+                            </div>
+                            <span class="step-tech">gTTS</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="features-card">
+                    <div class="section-header">
+                        <span class="icon">✨</span>
+                        <h2>Key Features</h2>
+                        <div class="line"></div>
+                    </div>
+                    <div class="features-grid">
+                        <div class="feature-item" data-info="ble">
+                            <span class="feature-icon">🔵</span>
+                            <span class="feature-text">BLE Push-to-Talk</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                        <div class="feature-item" data-info="earbuds">
+                            <span class="feature-icon">🎧</span>
+                            <span class="feature-text">BT Earbuds Output</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                        <div class="feature-item" data-info="autodetect">
+                            <span class="feature-icon">🔍</span>
+                            <span class="feature-text">Auto Language Detect</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                        <div class="feature-item" data-info="replay">
+                            <span class="feature-icon">🔁</span>
+                            <span class="feature-text">Instant Replay</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                        <div class="feature-item" data-info="pwa">
+                            <span class="feature-icon">📲</span>
+                            <span class="feature-text">Installable PWA</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                        <div class="feature-item" data-info="cloud">
+                            <span class="feature-icon">☁️</span>
+                            <span class="feature-text">Cloud Deployable</span>
+                            <span class="info-hint-inline"><span class="info-dot"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison -->
+                <div class="comparison-card">
+                    <div class="section-header">
+                        <span class="icon">📊</span>
+                        <h2>vs Commercial Devices</h2>
+                        <div class="line"></div>
+                    </div>
+                    <div class="comparison-table">
+                        <div class="comp-header"></div>
+                        <div class="comp-header">Commercial</div>
+                        <div class="comp-header">Our Device</div>
+
+                        <div class="comp-cell label-cell">💰 Cost</div>
+                        <div class="comp-cell">₹8,000 – ₹25,000</div>
+                        <div class="comp-cell ours">₹440</div>
+
+                        <div class="comp-cell label-cell">🌍 Languages</div>
+                        <div class="comp-cell">80 – 155</div>
+                        <div class="comp-cell ours">100+</div>
+
+                        <div class="comp-cell label-cell">🎧 BT Earbuds</div>
+                        <div class="comp-cell">❌</div>
+                        <div class="comp-cell ours">✅</div>
+
+                        <div class="comp-cell label-cell">🔓 Open Source</div>
+                        <div class="comp-cell">❌</div>
+                        <div class="comp-cell ours">✅</div>
+                    </div>
+                </div>
+
+                <!-- Future Vision -->
+                <div class="future-card" data-info="smartwatch">
+                    <div class="future-content">
+                        <div class="future-watch">
+                            <div class="watch-band-top"></div>
+                            <div class="watch-body">
+                                <div class="watch-screen">
+                                    <div class="watch-wave">
+                                        <div class="watch-wave-bar"></div>
+                                        <div class="watch-wave-bar"></div>
+                                        <div class="watch-wave-bar"></div>
+                                        <div class="watch-wave-bar"></div>
+                                        <div class="watch-wave-bar"></div>
+                                    </div>
+                                    <div class="watch-text">Translating...</div>
+                                </div>
+                            </div>
+                            <div class="watch-crown"></div>
+                            <div class="watch-band-bottom"></div>
+                        </div>
+                        <div class="future-text">
+                            <h3>🔮 Future: Smartwatch Integration</h3>
+                            <p>Wrist-mounted translator with built-in mic, haptic feedback &amp; on-device AI</p>
+                        </div>
+                        <span class="future-badge">Tap to explore</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── BOTTOM BAR ── -->
+        <footer class="bottom-bar">
+            <div class="team-info">
+                <span class="team-label">Team</span>
+                <div class="team-names">
+                    <span class="team-name">Balamurugan S</span>
+                    <span class="team-name">Siva Ajish Ram</span>
+                    <span class="team-name">Hari Karthikeyan</span>
+                </div>
+            </div>
+            <div class="tech-stack">
+                <span class="tech-pill">ESP32</span>
+                <span class="tech-pill">Python</span>
+                <span class="tech-pill">Flask</span>
+                <span class="tech-pill">Whisper AI</span>
+                <span class="tech-pill">BLE</span>
+                <span class="tech-pill">PWA</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ── INFO PANEL OVERLAY ── -->
+    <div class="info-overlay" id="infoOverlay">
+        <div class="info-backdrop" id="infoBackdrop"></div>
+        <div class="info-panel">
+            <div class="info-panel-header">
+                <div class="info-panel-title" id="infoPanelTitle"></div>
+                <button class="info-close-btn" id="infoCloseBtn">✕</button>
+            </div>
+            <div class="info-panel-body" id="infoPanelBody"></div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // ══════════════════════════════════════
+        //  3D DEVICE ROTATION
+        // ══════════════════════════════════════
+        const device = document.getElementById('device3d');
+        const showcase = document.getElementById('deviceShowcase');
+        if (device && showcase) {
+            let isDragging = false;
+            let startX, startY;
+            let rotX = -15, rotY = -25;
+            let currentRotX = rotX, currentRotY = rotY;
+            let autoRotateTimer = null;
+
+            function updateTransform() {
+                device.style.transform = `translateY(0) rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
+            }
+
+            function startDrag(x, y) {
+                isDragging = true;
+                startX = x;
+                startY = y;
+                device.classList.add('dragging');
+                clearTimeout(autoRotateTimer);
+            }
+
+            function moveDrag(x, y) {
+                if (!isDragging) return;
+                const dx = x - startX;
+                const dy = y - startY;
+                currentRotY = rotY + dx * 0.5;
+                currentRotX = rotX - dy * 0.5;
+                currentRotX = Math.max(-60, Math.min(60, currentRotX));
+                updateTransform();
+            }
+
+            function endDrag() {
+                if (!isDragging) return;
+                isDragging = false;
+                rotX = currentRotX;
+                rotY = currentRotY;
+                autoRotateTimer = setTimeout(() => {
+                    device.classList.remove('dragging');
+                    rotX = -15;
+                    rotY = -25;
+                    currentRotX = rotX;
+                    currentRotY = rotY;
+                }, 4000);
+            }
+
+            showcase.addEventListener('mousedown', (e) => { e.preventDefault(); startDrag(e.clientX, e.clientY); });
+            window.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+            window.addEventListener('mouseup', endDrag);
+            showcase.addEventListener('touchstart', (e) => { e.preventDefault(); const t = e.touches[0]; startDrag(t.clientX, t.clientY); }, { passive: false });
+            window.addEventListener('touchmove', (e) => { const t = e.touches[0]; moveDrag(t.clientX, t.clientY); });
+            window.addEventListener('touchend', endDrag);
+        }
+
+        // ══════════════════════════════════════
+        //  INFO PANEL SYSTEM
+        // ══════════════════════════════════════
+        const INFO_DATA = {
+            // Pipeline Steps
+            stt: {
+                icon: '🔤',
+                title: 'Speech-to-Text Engine',
+                tag: 'Stage 1',
+                tagClass: 'tag-blue',
+                body: `
+                    <p>We use <strong>Faster-Whisper</strong> (CTranslate2 optimized) with the <strong>small model in INT8 quantization</strong> for speech recognition. This runs entirely on the local CPU — no cloud API needed for this stage.</p>
+                    <div class="info-detail-grid">
+                        <div class="info-detail-item">
+                            <div class="detail-label">Model Size</div>
+                            <div class="detail-value">~500 MB</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Compute</div>
+                            <div class="detail-value">CPU (INT8)</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">VAD Filter</div>
+                            <div class="detail-value">Silero VAD</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Beam Size</div>
+                            <div class="detail-value">5</div>
+                        </div>
+                    </div>
+                    <div class="info-highlight">
+                        <div class="hl-title">🛡 Hallucination Rejection (98%)</div>
+                        We implemented a <strong>multi-layer filtering system</strong>: VAD pre-filtering, confidence thresholding (log_prob < -0.8), no-speech probability check (> 0.5), segment length filtering, and a curated blacklist of 30+ known Whisper hallucinations like "thank you for watching".
+                    </div>
+                `
+            },
+            translate: {
+                icon: '🌐',
+                title: 'Translation Engine',
+                tag: 'Stage 2',
+                tagClass: 'tag-purple',
+                body: `
+                    <p>Text translation is powered by <strong>Google Translate</strong> via the <strong>deep-translator</strong> Python library. It supports <strong>auto-detection</strong> of source language — users don't need to manually select what language they're speaking.</p>
+                    <div class="info-detail-grid">
+                        <div class="info-detail-item">
+                            <div class="detail-label">API</div>
+                            <div class="detail-value">Google Translate</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Library</div>
+                            <div class="detail-value">deep-translator</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Languages</div>
+                            <div class="detail-value">100+</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Detection</div>
+                            <div class="detail-value">Automatic</div>
+                        </div>
+                    </div>
+                    <div class="info-highlight">
+                        <div class="hl-title">⚡ Smart Skip</div>
+                        If source and target language are the same, translation is skipped entirely — reducing latency to near-zero for this stage.
+                    </div>
+                `
+            },
+            tts: {
+                icon: '🔊',
+                title: 'Text-to-Speech Synthesis',
+                tag: 'Stage 3',
+                tagClass: 'tag-cyan',
+                body: `
+                    <p><strong>gTTS (Google Text-to-Speech)</strong> generates natural-sounding MP3 audio in the target language. The audio is Base64-encoded and sent to the phone, which plays it through paired <strong>Bluetooth earbuds</strong>.</p>
+                    <div class="info-detail-grid">
+                        <div class="info-detail-item">
+                            <div class="detail-label">Engine</div>
+                            <div class="detail-value">gTTS</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Output</div>
+                            <div class="detail-value">MP3 (Base64)</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Voices</div>
+                            <div class="detail-value">Language-aware</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Delivery</div>
+                            <div class="detail-value">BT Earbuds</div>
+                        </div>
+                    </div>
+                    <div class="info-highlight">
+                        <div class="hl-title">🔄 Fallback System</div>
+                        If the target language isn't supported by gTTS, the system falls back to the base language code (e.g., zh-CN → zh), and ultimately to English if no match is found.
+                    </div>
+                `
+            },
+            // Stats
+            languages: {
+                icon: '🌍',
+                title: '100+ Supported Languages',
+                tag: 'Coverage',
+                tagClass: 'tag-green',
+                body: `
+                    <p>Our translator supports <strong>100+ languages</strong> including Tamil, Hindi, Japanese, Korean, Arabic, French, German, Spanish, Chinese, Russian, and many more.</p>
+                    <div class="info-highlight">
+                        <div class="hl-title">🔍 Auto-Detection</div>
+                        Thanks to Whisper AI, the source language is <strong>automatically detected</strong> — users just speak naturally and the system figures out which language they're using, with confidence scores.
+                    </div>
+                    <p>Each language is marked whether <strong>Text-to-Speech is available</strong>. For languages where gTTS cannot produce speech, translation still works — the text is displayed on screen.</p>
+                `
+            },
+            latency: {
+                icon: '⚡',
+                title: '3.8s Average Latency',
+                tag: 'Performance',
+                tagClass: 'tag-orange',
+                body: `
+                    <p>The complete pipeline — from releasing the button to hearing the translation — takes approximately <strong>3.8 seconds</strong> on average.</p>
+                    <div class="info-detail-grid">
+                        <div class="info-detail-item">
+                            <div class="detail-label">STT (Whisper)</div>
+                            <div class="detail-value">~2.0s</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Translation</div>
+                            <div class="detail-value">~0.5s</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">TTS Generation</div>
+                            <div class="detail-value">~0.8s</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Network + Audio</div>
+                            <div class="detail-value">~0.5s</div>
+                        </div>
+                    </div>
+                    <p>STT is the bottleneck. Using the <strong>INT8 quantized small model</strong> reduced inference time by 40% compared to the base model without noticeable accuracy loss.</p>
+                `
+            },
+            accuracy: {
+                icon: '🎯',
+                title: '89–96% Recognition Accuracy',
+                tag: 'AI Quality',
+                tagClass: 'tag-blue',
+                body: `
+                    <p>Faster-Whisper's <strong>small model</strong> delivers 89–96% accuracy depending on language, accent, and background noise levels.</p>
+                    <div class="info-highlight">
+                        <div class="hl-title">🛡 Multi-Layer Filtering</div>
+                        Raw Whisper output goes through <strong>5 filters</strong>: VAD (Voice Activity Detection), no-speech probability, average log probability, minimum segment length, and a hallucination blacklist. This boosts <strong>effective accuracy to 98%</strong> by eliminating false positives.
+                    </div>
+                    <p>Audio is preprocessed: converted to <strong>16kHz mono WAV</strong>, and quiet recordings are auto-boosted to -25 dBFS for optimal recognition.</p>
+                `
+            },
+            battery: {
+                icon: '🔋',
+                title: '10.5 Hour Battery Life',
+                tag: 'Hardware',
+                tagClass: 'tag-green',
+                body: `
+                    <p>With a <strong>1000mAh battery</strong>, the ESP32 device can run for approximately <strong>10.5 hours</strong> in connected BLE standby mode.</p>
+                    <div class="info-detail-grid">
+                        <div class="info-detail-item">
+                            <div class="detail-label">Active Current</div>
+                            <div class="detail-value">~95 mA</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">BLE Standby</div>
+                            <div class="detail-value">~30 mA</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Deep Sleep</div>
+                            <div class="detail-value">~10 µA</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Battery</div>
+                            <div class="detail-value">1000 mAh</div>
+                        </div>
+                    </div>
+                    <p>The ESP32's <strong>Xtensa LX6 dual-core</strong> processor with BLE 4.2 is chosen specifically for its ultra-low power consumption in IoT applications.</p>
+                `
+            },
+            // Features
+            ble: {
+                icon: '🔵',
+                title: 'BLE Push-to-Talk',
+                tag: 'Hardware',
+                tagClass: 'tag-blue',
+                body: `
+                    <p>The ESP32 acts as a <strong>BLE GATT Server</strong> advertising as "TranslatorBtn". The phone connects via <strong>Web Bluetooth API</strong> in Chrome and subscribes to button press/release notifications.</p>
+                    <div class="info-detail-grid">
+                        <div class="info-detail-item">
+                            <div class="detail-label">Protocol</div>
+                            <div class="detail-value">BLE 4.2 GATT</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Range</div>
+                            <div class="detail-value">~10m Indoor</div>
+                        </div>
+                    </div>
+                    <p>Three physical buttons: <strong>Record</strong> (hold-to-talk), <strong>Replay</strong> (single press), and <strong>Previous</strong> (navigate history). All use internal pull-up resistors — no external components needed.</p>
+                `
+            },
+            earbuds: {
+                icon: '🎧',
+                title: 'Bluetooth Earbuds Output',
+                tag: 'Audio',
+                tagClass: 'tag-purple',
+                body: `
+                    <p>Translated speech is played directly through the user's <strong>Bluetooth earbuds</strong> paired to their phone. This provides a <strong>private, hands-free</strong> translation experience — ideal for real conversations.</p>
+                    <p>Unlike competing devices that use built-in speakers (requiring everyone to hear the translation), our approach is <strong>discreet and personal</strong>.</p>
+                `
+            },
+            autodetect: {
+                icon: '🔍',
+                title: 'Automatic Language Detection',
+                tag: 'AI',
+                tagClass: 'tag-cyan',
+                body: `
+                    <p>Faster-Whisper automatically detects the spoken language with a <strong>confidence score</strong>. Users don't need to manually select the source language — just set the target and speak.</p>
+                    <p>The detection runs during the first few seconds of speech and supports all 100+ languages Whisper was trained on.</p>
+                `
+            },
+            replay: {
+                icon: '🔁',
+                title: 'Instant Replay & History',
+                tag: 'UX',
+                tagClass: 'tag-green',
+                body: `
+                    <p>Press the <strong>Replay button</strong> (GPIO 5) to instantly hear the last translation again. Press the <strong>Previous button</strong> (GPIO 16) to navigate through the last <strong>20 translations</strong>.</p>
+                    <p>History is maintained in the browser session and can be replayed by tapping on any history item in the UI.</p>
+                `
+            },
+            pwa: {
+                icon: '📲',
+                title: 'Progressive Web App',
+                tag: 'Frontend',
+                tagClass: 'tag-orange',
+                body: `
+                    <p>The web interface is a full <strong>Progressive Web App (PWA)</strong> with a manifest and service worker. Users can install it to their home screen — it looks and feels like a native app.</p>
+                    <p><strong>No app store needed.</strong> Just open the URL in Chrome, tap "Add to Home Screen", and it's installed. The service worker caches assets for faster loading.</p>
+                `
+            },
+            cloud: {
+                icon: '☁️',
+                title: 'Cloud Deployment',
+                tag: 'DevOps',
+                tagClass: 'tag-purple',
+                body: `
+                    <p>The AI server includes a <strong>Dockerfile</strong> for one-click deployment to <strong>Hugging Face Spaces</strong>. This means users don't need to run the Python server on their laptop.</p>
+                    <div class="info-highlight">
+                        <div class="hl-title">🚀 Dual Mode</div>
+                        <strong>Local mode:</strong> Run on your laptop for lowest latency (~3.8s).<br>
+                        <strong>Cloud mode:</strong> Deploy to HF Spaces for anywhere access (higher latency but no local setup needed).
+                    </div>
+                `
+            },
+            // Future Vision
+            smartwatch: {
+                icon: '⌚',
+                title: 'Smartwatch Translator',
+                tag: 'Future Vision',
+                tagClass: 'tag-purple',
+                body: `
+                    <p>Our next evolution: a <strong>wrist-mounted AI translator</strong> that eliminates the need for a separate device entirely. Imagine speaking into your watch and hearing the translation in your earbuds — hands-free, instant, and always on your wrist.</p>
+
+                    <div class="info-highlight">
+                        <div class="hl-title">🎯 Why Smartwatch?</div>
+                        A smartwatch is the <strong>perfect form factor</strong> for a translator: it's always accessible (no fishing in pockets), has a built-in microphone, supports Bluetooth for earbuds, and can show translated text on the display. It turns translation into a <strong>natural, seamless gesture</strong>.
+                    </div>
+
+                    <div class="info-detail-grid">
+                        <div class="info-detail-item">
+                            <div class="detail-label">Processor</div>
+                            <div class="detail-value">ESP32-S3</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">On-Device AI</div>
+                            <div class="detail-value">TinyML Whisper</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Display</div>
+                            <div class="detail-value">1.3" Round LCD</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Input</div>
+                            <div class="detail-value">Built-in MEMS Mic</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Feedback</div>
+                            <div class="detail-value">Haptic Motor</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Connectivity</div>
+                            <div class="detail-value">BLE 5.0 + WiFi</div>
+                        </div>
+                    </div>
+
+                    <p><strong>Key advantages over current design:</strong></p>
+                    <div class="info-detail-grid">
+                        <div class="info-detail-item">
+                            <div class="detail-label">Current: ESP32 Box</div>
+                            <div class="detail-value">Pocket device + Phone</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Future: Watch</div>
+                            <div class="detail-value">All-in-one wearable</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Current: 3 Buttons</div>
+                            <div class="detail-value">Physical push buttons</div>
+                        </div>
+                        <div class="info-detail-item">
+                            <div class="detail-label">Future: Touch + Gesture</div>
+                            <div class="detail-value">Touch screen + raise-to-speak</div>
+                        </div>
+                    </div>
+
+                    <div class="info-highlight">
+                        <div class="hl-title">🧠 On-Device AI Pipeline</div>
+                        With <strong>ESP32-S3</strong>'s neural network accelerator, we can run a <strong>quantized TinyML version of Whisper</strong> directly on the watch — enabling <strong>offline speech recognition</strong>. Translation would still use the cloud, but STT becomes fully local, reducing latency by ~40% and enabling partial offline capability.
+                    </div>
+
+                    <p><strong>Estimated cost:</strong> ₹1,200–₹1,800 — still <strong>85% cheaper</strong> than commercial translation earbuds (₹10,000+), but now in a sleek wearable form factor that judges and users will love.</p>
+                `
+            },
+        };
+
+        // Info Panel Logic
+        const overlay = document.getElementById('infoOverlay');
+        const panelTitle = document.getElementById('infoPanelTitle');
+        const panelBody = document.getElementById('infoPanelBody');
+        const closeBtn = document.getElementById('infoCloseBtn');
+        const backdrop = document.getElementById('infoBackdrop');
+
+        function openInfo(key) {
+            const data = INFO_DATA[key];
+            if (!data) return;
+            panelTitle.innerHTML = `
+                <span class="icon">${data.icon}</span>
+                <h3>${data.title}</h3>
+                <span class="tag ${data.tagClass}">${data.tag}</span>
+            `;
+            panelBody.innerHTML = data.body;
+            overlay.classList.add('active');
+        }
+
+        function closeInfo() {
+            overlay.classList.remove('active');
+        }
+
+        // Bind clicks on all [data-info] elements
+        document.querySelectorAll('[data-info]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openInfo(el.dataset.info);
+            });
+        });
+
+        closeBtn.addEventListener('click', closeInfo);
+        backdrop.addEventListener('click', closeInfo);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeInfo(); });
+    })();
+    </script>
+</body>
+</html>
