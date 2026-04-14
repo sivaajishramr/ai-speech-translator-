@@ -1451,6 +1451,66 @@
             color: var(--text-muted);
             opacity: 0.7;
         }
+
+        /* ═══════════════════════════════════════════
+           MOUSE GLOW & PARTICLE TRAIL
+           ═══════════════════════════════════════════ */
+        .mouse-glow {
+            position: fixed;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            background: radial-gradient(
+                circle at center,
+                rgba(59, 130, 246, 0.12) 0%,
+                rgba(139, 92, 246, 0.08) 30%,
+                rgba(6, 182, 212, 0.04) 55%,
+                transparent 70%
+            );
+            transform: translate(-50%, -50%);
+            will-change: left, top;
+            mix-blend-mode: screen;
+            transition: opacity 0.4s ease;
+            opacity: 0;
+        }
+
+        .mouse-glow.active {
+            opacity: 1;
+        }
+
+        .mouse-glow-ring {
+            position: fixed;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            border: 1.5px solid rgba(139, 92, 246, 0.35);
+            transform: translate(-50%, -50%);
+            will-change: left, top, transform;
+            transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease;
+            opacity: 0;
+        }
+
+        .mouse-glow-ring.active {
+            opacity: 1;
+        }
+
+        .mouse-glow-ring.hovering {
+            width: 40px;
+            height: 40px;
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .mouse-particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            will-change: left, top, opacity, transform;
+        }
     </style>
 </head>
 <body>
@@ -2179,6 +2239,143 @@
         closeBtn.addEventListener('click', closeInfo);
         backdrop.addEventListener('click', closeInfo);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeInfo(); });
+
+        // ══════════════════════════════════════
+        //  MOUSE GLOW + PARTICLE TRAIL EFFECT
+        // ══════════════════════════════════════
+        (function initMouseEffect() {
+            // Create glow elements
+            const glow = document.createElement('div');
+            glow.className = 'mouse-glow';
+            document.body.appendChild(glow);
+
+            const ring = document.createElement('div');
+            ring.className = 'mouse-glow-ring';
+            document.body.appendChild(ring);
+
+            // Mouse position tracking with smooth interpolation
+            let mouseX = -200, mouseY = -200;
+            let glowX = -200, glowY = -200;
+            let ringX = -200, ringY = -200;
+            let isMouseOnPage = false;
+
+            // Particle pool
+            const particles = [];
+            const MAX_PARTICLES = 35;
+            let particleTimer = 0;
+            const PARTICLE_INTERVAL = 3; // spawn every N frames
+
+            // Color palette for particles
+            const PARTICLE_COLORS = [
+                'rgba(59, 130, 246, 0.6)',   // blue
+                'rgba(139, 92, 246, 0.6)',   // purple
+                'rgba(6, 182, 212, 0.5)',    // cyan
+                'rgba(236, 72, 153, 0.4)',   // pink
+                'rgba(16, 185, 129, 0.4)',   // green
+            ];
+
+            function createParticle(x, y) {
+                const el = document.createElement('div');
+                el.className = 'mouse-particle';
+                const size = Math.random() * 5 + 2;
+                const color = PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)];
+                el.style.width = size + 'px';
+                el.style.height = size + 'px';
+                el.style.background = color;
+                el.style.boxShadow = `0 0 ${size * 2}px ${color}`;
+                document.body.appendChild(el);
+
+                return {
+                    el,
+                    x: x + (Math.random() - 0.5) * 16,
+                    y: y + (Math.random() - 0.5) * 16,
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: (Math.random() - 0.5) * 1.5,
+                    life: 1,
+                    decay: Math.random() * 0.025 + 0.015,
+                    size
+                };
+            }
+
+            // Track mouse
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                if (!isMouseOnPage) {
+                    isMouseOnPage = true;
+                    glow.classList.add('active');
+                    ring.classList.add('active');
+                    glowX = mouseX;
+                    glowY = mouseY;
+                    ringX = mouseX;
+                    ringY = mouseY;
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                isMouseOnPage = false;
+                glow.classList.remove('active');
+                ring.classList.remove('active');
+            });
+
+            // Detect hovering over interactive elements
+            document.addEventListener('mouseover', (e) => {
+                const target = e.target.closest('.stat-card, .pipeline-step, .feature-item, .future-card, .device-btn, .badge, .team-name, .tech-pill, a, button, [data-info]');
+                if (target) {
+                    ring.classList.add('hovering');
+                } else {
+                    ring.classList.remove('hovering');
+                }
+            });
+
+            // Animation loop
+            function animate() {
+                // Smooth glow follow (heavy lag for dreamy effect)
+                glowX += (mouseX - glowX) * 0.08;
+                glowY += (mouseY - glowY) * 0.08;
+                glow.style.left = glowX + 'px';
+                glow.style.top = glowY + 'px';
+
+                // Smooth ring follow (snappier)
+                ringX += (mouseX - ringX) * 0.18;
+                ringY += (mouseY - ringY) * 0.18;
+                ring.style.left = ringX + 'px';
+                ring.style.top = ringY + 'px';
+
+                // Spawn particles
+                if (isMouseOnPage) {
+                    particleTimer++;
+                    if (particleTimer >= PARTICLE_INTERVAL && particles.length < MAX_PARTICLES) {
+                        particleTimer = 0;
+                        particles.push(createParticle(mouseX, mouseY));
+                    }
+                }
+
+                // Update particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.life -= p.decay;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vx *= 0.97;
+                    p.vy *= 0.97;
+
+                    if (p.life <= 0) {
+                        p.el.remove();
+                        particles.splice(i, 1);
+                    } else {
+                        p.el.style.left = p.x + 'px';
+                        p.el.style.top = p.y + 'px';
+                        p.el.style.opacity = p.life;
+                        p.el.style.transform = `translate(-50%, -50%) scale(${p.life})`;
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        })();
     })();
     </script>
 </body>

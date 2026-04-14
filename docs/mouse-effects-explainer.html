@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Effects — Animated Explainer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #07070d;
+            --bg-card: #111119;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --cyan: #06b6d4;
+            --pink: #ec4899;
+            --green: #10b981;
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+            --text-muted: #475569;
+        }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        /* ── BACKGROUND ── */
+        .bg-noise {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(59, 130, 246, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.02) 1px, transparent 1px);
+            background-size: 80px 80px;
+            z-index: 0;
+        }
+
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.4;
+        }
+
+        .bg-orb-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+            top: -150px; left: -100px;
+            animation: orbFloat1 12s ease-in-out infinite;
+        }
+
+        .bg-orb-2 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(139,92,246,0.12), transparent 70%);
+            bottom: -100px; right: -80px;
+            animation: orbFloat2 15s ease-in-out infinite;
+        }
+
+        @keyframes orbFloat1 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(40px, 30px); }
+        }
+        @keyframes orbFloat2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-30px, -40px); }
+        }
+
+        /* ── MAIN STAGE ── */
+        .stage {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── SLIDE SYSTEM ── */
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            padding: 60px;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: all;
+        }
+
+        .slide.exit-left {
+            opacity: 0;
+            transform: scale(0.9) translateX(-60px);
+        }
+
+        /* ── SLIDE CONTENT STYLES ── */
+        .slide-number {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--purple);
+            margin-bottom: 16px;
+            opacity: 0;
+            animation: fadeUp 0.6s ease-out 0.3s forwards;
+        }
+
+        .slide.active .slide-number { animation: fadeUp 0.6s ease-out 0.3s forwards; }
+
+        .slide-title {
+            font-size: 3rem;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+            max-width: 700px;
+        }
+
+        .slide-title .gradient {
+            background: linear-gradient(135deg, var(--blue), var(--purple), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            text-align: center;
+            max-width: 550px;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── DEMO AREAS ── */
+        .demo-box {
+            width: 650px;
+            height: 280px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .demo-label {
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .demo-label::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: liveDot 2s infinite;
+        }
+
+        @keyframes liveDot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+            50% { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+        }
+
+        .demo-hint {
+            position: absolute;
+            bottom: 14px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+        }
+
+        /* ── GLOW DEMO (Slide 2) ── */
+        .glow-demo-orb {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(59,130,246,0.25), rgba(139,92,246,0.15), transparent 70%);
+            position: absolute;
+            filter: blur(2px);
+            animation: glowDemoMove 5s ease-in-out infinite;
+            mix-blend-mode: screen;
+        }
+
+        @keyframes glowDemoMove {
+            0% { left: 10%; top: 30%; }
+            25% { left: 55%; top: 15%; }
+            50% { left: 70%; top: 55%; }
+            75% { left: 30%; top: 65%; }
+            100% { left: 10%; top: 30%; }
+        }
+
+        .glow-trail {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            position: absolute;
+            animation: glowDemoMove 5s ease-in-out infinite;
+        }
+
+        .glow-trail-1 {
+            background: rgba(59,130,246,0.7);
+            box-shadow: 0 0 12px rgba(59,130,246,0.5);
+            animation-delay: -0.1s;
+            width: 6px; height: 6px;
+        }
+        .glow-trail-2 {
+            background: rgba(139,92,246,0.5);
+            box-shadow: 0 0 10px rgba(139,92,246,0.4);
+            animation-delay: -0.25s;
+            width: 5px; height: 5px;
+        }
+        .glow-trail-3 {
+            background: rgba(6,182,212,0.3);
+            box-shadow: 0 0 8px rgba(6,182,212,0.3);
+            animation-delay: -0.45s;
+            width: 4px; height: 4px;
+        }
+
+        /* ── RING DEMO (Slide 3) ── */
+        .ring-demo-cursor {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(139,92,246,0.5);
+            position: absolute;
+            animation: ringDemoMove 6s ease-in-out infinite;
+            transition: width 0.3s, height 0.3s, border-color 0.3s;
+        }
+
+        @keyframes ringDemoMove {
+            0% { left: 15%; top: 40%; width: 24px; height: 24px; border-color: rgba(139,92,246,0.5); }
+            20% { left: 28%; top: 35%; }
+            30% { left: 33%; top: 45%; width: 42px; height: 42px; border-color: rgba(59,130,246,0.7); }
+            45% { left: 33%; top: 45%; width: 42px; height: 42px; border-color: rgba(59,130,246,0.7); }
+            55% { left: 55%; top: 30%; width: 24px; height: 24px; border-color: rgba(139,92,246,0.5); }
+            65% { left: 65%; top: 50%; width: 42px; height: 42px; border-color: rgba(59,130,246,0.7); }
+            80% { left: 65%; top: 50%; width: 42px; height: 42px; border-color: rgba(59,130,246,0.7); }
+            90% { left: 80%; top: 35%; width: 24px; height: 24px; border-color: rgba(139,92,246,0.5); }
+            100% { left: 15%; top: 40%; width: 24px; height: 24px; border-color: rgba(139,92,246,0.5); }
+        }
+
+        .ring-demo-card {
+            width: 120px;
+            height: 70px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            position: absolute;
+        }
+
+        .ring-demo-card .card-icon { font-size: 1.2rem; }
+        .ring-demo-card .card-text {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .ring-card-1 { left: 25%; top: 35%; }
+        .ring-card-2 { left: 55%; top: 40%; }
+
+        .ring-demo-card.highlight {
+            border-color: rgba(59,130,246,0.3);
+            background: rgba(59,130,246,0.06);
+            animation: cardPulse 6s ease-in-out infinite;
+        }
+
+        @keyframes cardPulse {
+            0%, 20%, 55%, 100% { border-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); }
+            30%, 45% { border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.06); }
+            65%, 80% { border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.06); }
+        }
+
+        .ring-card-1 { animation: cardPulse 6s ease-in-out infinite; }
+        .ring-card-2 { animation: cardPulse 6s ease-in-out infinite; animation-delay: -2.4s; }
+
+        /* ── PARTICLE DEMO (Slide 4) ── */
+        .particle-canvas {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+
+        /* ── FEATURE CARDS (Slide 5) ── */
+        .features-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
+
+        .feat-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 24px 20px;
+            width: 170px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .slide.active .feat-card {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide.active .feat-card:nth-child(1) { transition-delay: 0.2s; }
+        .slide.active .feat-card:nth-child(2) { transition-delay: 0.35s; }
+        .slide.active .feat-card:nth-child(3) { transition-delay: 0.5s; }
+        .slide.active .feat-card:nth-child(4) { transition-delay: 0.65s; }
+
+        .feat-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .feat-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .feat-desc {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ── PROGRESS BAR ── */
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--blue), var(--purple), var(--cyan));
+            z-index: 100;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 15px rgba(59,130,246,0.4);
+        }
+
+        /* ── SLIDE COUNTER ── */
+        .slide-counter {
+            position: fixed;
+            bottom: 24px;
+            right: 32px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            z-index: 100;
+            letter-spacing: 0.08em;
+        }
+
+        .slide-counter .current {
+            color: var(--text);
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        /* ── NAV DOTS ── */
+        .nav-dots {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .nav-dot.active {
+            background: var(--purple);
+            box-shadow: 0 0 10px rgba(139,92,246,0.5);
+            transform: scale(1.3);
+        }
+
+        /* ── VOICE CONTROL ── */
+        .voice-toggle {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            letter-spacing: 0.04em;
+        }
+
+        .voice-toggle:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(139,92,246,0.3);
+        }
+
+        .voice-toggle .speaker-icon {
+            font-size: 1rem;
+        }
+
+        .voice-toggle.muted {
+            opacity: 0.5;
+        }
+
+        /* ── SKIP BUTTON ── */
+        .skip-btn {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 100;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            letter-spacing: 0.04em;
+        }
+
+        .skip-btn:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        /* ── MOUSE EFFECTS (Live on this page too!) ── */
+        .custom-cursor {
+            position: fixed;
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(139,92,246,0.4);
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s;
+        }
+
+        .custom-glow {
+            position: fixed;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            background: radial-gradient(circle, rgba(59,130,246,0.1), rgba(139,92,246,0.06), transparent 70%);
+            transform: translate(-50%, -50%);
+            mix-blend-mode: screen;
+        }
+
+        .live-particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        /* ── INTRO TITLE ANIMATION ── */
+        .intro-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: iconBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes iconBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* ── FINAL SLIDE ── */
+        .final-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: 0.02em;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+        }
+
+        .final-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(59,130,246,0.3);
+        }
+
+        /* ── CODE SNIPPET STYLE ── */
+        .code-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(139,92,246,0.12);
+            color: var(--purple);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-noise"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+
+    <!-- Custom Cursor (live on page) -->
+    <div class="custom-cursor" id="cursor"></div>
+    <div class="custom-glow" id="cursorGlow"></div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Controls -->
+    <button class="voice-toggle" id="voiceToggle">
+        <span class="speaker-icon">🔊</span> Voice ON
+    </button>
+    <button class="skip-btn" id="skipBtn">⏭ Next Slide</button>
+
+    <!-- Nav Dots -->
+    <div class="nav-dots" id="navDots"></div>
+
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span class="current" id="currentSlide">1</span> / <span id="totalSlides">6</span>
+    </div>
+
+    <!-- ═══ SLIDES ═══ -->
+    <div class="stage">
+
+        <!-- SLIDE 1: INTRO -->
+        <div class="slide active" data-slide="0">
+            <div class="intro-icon">✨🖱️</div>
+            <div class="slide-number">Interactive Effects</div>
+            <h1 class="slide-title">
+                The <span class="gradient">Mouse Magic</span><br>Behind Our Website
+            </h1>
+            <p class="slide-subtitle">
+                A walkthrough of the interactive cursor effects added to the ESP32 AI Translator showcase — glow, particles, and smart hover detection.
+            </p>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <span class="code-tag">requestAnimationFrame</span>
+                <span class="code-tag">GPU Accelerated</span>
+                <span class="code-tag">60 FPS</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: GLOW ORB -->
+        <div class="slide" data-slide="1">
+            <div class="slide-number">Effect 01 / 04</div>
+            <h1 class="slide-title">
+                The <span class="gradient">Glow Orb</span>
+            </h1>
+            <p class="slide-subtitle">
+                A 280-pixel radial gradient in blue, purple, and cyan softly follows your cursor with a dreamy lag — creating an ambient lighting effect.
+            </p>
+            <div class="demo-box">
+                <div class="demo-label">Live Simulation</div>
+                <div class="glow-demo-orb"></div>
+                <div class="glow-trail glow-trail-1"></div>
+                <div class="glow-trail glow-trail-2"></div>
+                <div class="glow-trail glow-trail-3"></div>
+                <div class="demo-hint">Smooth interpolation factor: 0.08 (heavy lag for dreamy feel)</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: CURSOR RING -->
+        <div class="slide" data-slide="2">
+            <div class="slide-number">Effect 02 / 04</div>
+            <h1 class="slide-title">
+                Smart <span class="gradient">Cursor Ring</span>
+            </h1>
+            <p class="slide-subtitle">
+                A subtle 24px ring follows the cursor — and expands to 40px when hovering over interactive elements like cards, buttons, and links.
+            </p>
+            <div class="demo-box">
+                <div class="demo-label">Live Simulation</div>
+                <div class="ring-demo-card ring-card-1">
+                    <span class="card-icon">🌍</span>
+                    <span class="card-text">100+ Languages</span>
+                </div>
+                <div class="ring-demo-card ring-card-2">
+                    <span class="card-icon">⚡</span>
+                    <span class="card-text">3.8s Latency</span>
+                </div>
+                <div class="ring-demo-cursor"></div>
+                <div class="demo-hint">Ring expands on: stat cards, buttons, pipeline steps, badges, links</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: PARTICLES -->
+        <div class="slide" data-slide="3">
+            <div class="slide-number">Effect 03 / 04</div>
+            <h1 class="slide-title">
+                <span class="gradient">Particle Trail</span>
+            </h1>
+            <p class="slide-subtitle">
+                Colorful particles spawn at the cursor — blue, purple, cyan, pink, and green dots that drift outward, glow, and gracefully fade away.
+            </p>
+            <div class="demo-box">
+                <div class="demo-label">Live Simulation</div>
+                <canvas class="particle-canvas" id="particleCanvas"></canvas>
+                <div class="demo-hint">Max 35 particles • Randomized size, color, velocity & decay</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: ALL FEATURES -->
+        <div class="slide" data-slide="4">
+            <div class="slide-number">Technical Summary</div>
+            <h1 class="slide-title">
+                <span class="gradient">Built for Performance</span>
+            </h1>
+            <p class="slide-subtitle">
+                Every effect is optimized for smooth 60fps rendering with zero impact on usability.
+            </p>
+            <div class="features-row">
+                <div class="feat-card">
+                    <div class="feat-icon">⚡</div>
+                    <div class="feat-title" style="color:var(--blue)">GPU Powered</div>
+                    <div class="feat-desc">will-change & requestAnimationFrame for buttery-smooth rendering</div>
+                </div>
+                <div class="feat-card">
+                    <div class="feat-icon">👆</div>
+                    <div class="feat-title" style="color:var(--purple)">Non-Blocking</div>
+                    <div class="feat-desc">pointer-events: none ensures effects never block user clicks</div>
+                </div>
+                <div class="feat-card">
+                    <div class="feat-icon">🎨</div>
+                    <div class="feat-title" style="color:var(--cyan)">Screen Blend</div>
+                    <div class="feat-desc">mix-blend-mode: screen for natural light glow on dark backgrounds</div>
+                </div>
+                <div class="feat-card">
+                    <div class="feat-icon">🧹</div>
+                    <div class="feat-title" style="color:var(--green)">Auto Cleanup</div>
+                    <div class="feat-desc">Effects fade on mouse leave — particles self-destruct when expired</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: FINAL -->
+        <div class="slide" data-slide="5">
+            <div class="intro-icon">🚀</div>
+            <div class="slide-number">That's It!</div>
+            <h1 class="slide-title">
+                <span class="gradient">Move Your Mouse</span><br>to Experience It
+            </h1>
+            <p class="slide-subtitle">
+                These effects are live right now on this page! Move your cursor around to see the glow, ring, and particles in action.
+            </p>
+            <a class="final-cta" href="index.html">
+                🌐 View the Full Showcase →
+            </a>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // ═══════════════════════════════════
+        //  SLIDE MANAGEMENT
+        // ═══════════════════════════════════
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+        let isTransitioning = false;
+        let voiceEnabled = true;
+        let autoTimer = null;
+
+        // Narration scripts per slide
+        const NARRATIONS = [
+            "Welcome! Let me walk you through the interactive mouse effects on our ESP32 AI Translator showcase website. These effects make the page feel alive and premium. Let's explore each one.",
+            "First up: the Glow Orb. A large, soft gradient follows your cursor with a smooth, dreamy lag. It uses blue, purple, and cyan colors blended together with screen mode, creating an ambient lighting feel on the dark background.",
+            "Next: the Smart Cursor Ring. A minimal 24 pixel ring follows your mouse more snappily. When you hover over interactive elements like stat cards, pipeline steps, or buttons, the ring expands to 40 pixels — giving clear visual feedback.",
+            "The Particle Trail is where the magic really shines. Tiny glowing particles in blue, purple, cyan, pink, and green spawn at the cursor position. They drift outward with random velocities, then gradually fade and shrink until they disappear. Maximum 35 particles at any time.",
+            "All effects are engineered for performance. We use GPU acceleration with will change, request animation frame for smooth 60 FPS, pointer events none so effects never block clicks, screen blend mode for natural lighting, and automatic cleanup when the mouse leaves the page.",
+            "That's the complete overview! The effects are actually live right here on this page. Move your mouse around to see the glow orb, cursor ring, and particle trail in action. Click the button below to see the full showcase."
+        ];
+
+        // Build nav dots
+        const navDots = document.getElementById('navDots');
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('button');
+            dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            dot.addEventListener('click', () => goToSlide(i));
+            navDots.appendChild(dot);
+        }
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function updateUI() {
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('progressBar').style.width = ((currentSlide + 1) / totalSlides * 100) + '%';
+            document.querySelectorAll('.nav-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === currentSlide);
+            });
+        }
+
+        function goToSlide(index) {
+            if (isTransitioning || index === currentSlide) return;
+            isTransitioning = true;
+            clearTimeout(autoTimer);
+            window.speechSynthesis.cancel();
+
+            const prev = slides[currentSlide];
+            const next = slides[index];
+
+            prev.classList.remove('active');
+            prev.classList.add('exit-left');
+
+            setTimeout(() => {
+                prev.classList.remove('exit-left');
+                next.classList.add('active');
+                currentSlide = index;
+                updateUI();
+                isTransitioning = false;
+
+                // Speak narration
+                if (voiceEnabled) {
+                    speakNarration(currentSlide);
+                } else {
+                    scheduleAutoAdvance();
+                }
+
+                // Start particle canvas if on that slide
+                if (currentSlide === 3) startParticleDemo();
+            }, 500);
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            }
+        }
+
+        // ═══════════════════════════════════
+        //  VOICE NARRATION (Web Speech API)
+        // ═══════════════════════════════════
+        function speakNarration(slideIndex) {
+            window.speechSynthesis.cancel();
+            const text = NARRATIONS[slideIndex];
+            if (!text) return;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+            utterance.volume = 0.9;
+
+            // Try to pick a good voice
+            const voices = window.speechSynthesis.getVoices();
+            const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+                || voices.find(v => v.lang.startsWith('en-US'))
+                || voices.find(v => v.lang.startsWith('en'));
+            if (preferred) utterance.voice = preferred;
+
+            utterance.onend = () => {
+                // Auto-advance after narration finishes
+                setTimeout(() => {
+                    if (currentSlide < totalSlides - 1) {
+                        nextSlide();
+                    }
+                }, 1500);
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function scheduleAutoAdvance() {
+            clearTimeout(autoTimer);
+            autoTimer = setTimeout(() => {
+                if (currentSlide < totalSlides - 1) nextSlide();
+            }, 6000);
+        }
+
+        // Voice toggle
+        const voiceToggle = document.getElementById('voiceToggle');
+        voiceToggle.addEventListener('click', () => {
+            voiceEnabled = !voiceEnabled;
+            voiceToggle.innerHTML = voiceEnabled
+                ? '<span class="speaker-icon">🔊</span> Voice ON'
+                : '<span class="speaker-icon">🔇</span> Voice OFF';
+            voiceToggle.classList.toggle('muted', !voiceEnabled);
+
+            if (!voiceEnabled) {
+                window.speechSynthesis.cancel();
+                scheduleAutoAdvance();
+            } else {
+                clearTimeout(autoTimer);
+                speakNarration(currentSlide);
+            }
+        });
+
+        // Skip button
+        document.getElementById('skipBtn').addEventListener('click', nextSlide);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft' && currentSlide > 0) goToSlide(currentSlide - 1);
+        });
+
+        // Start first narration after a short delay (voices may load async)
+        window.speechSynthesis.onvoiceschanged = () => {};
+        setTimeout(() => {
+            if (voiceEnabled) speakNarration(0);
+        }, 1200);
+
+        // ═══════════════════════════════════
+        //  PARTICLE CANVAS DEMO (Slide 4)
+        // ═══════════════════════════════════
+        function startParticleDemo() {
+            const canvas = document.getElementById('particleCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+
+            const W = canvas.offsetWidth;
+            const H = canvas.offsetHeight;
+            const particles = [];
+            const colors = [
+                'rgba(59,130,246,', 'rgba(139,92,246,',
+                'rgba(6,182,212,', 'rgba(236,72,153,',
+                'rgba(16,185,129,'
+            ];
+
+            // Simulated cursor path
+            let t = 0;
+
+            function spawnBurst(x, y) {
+                for (let i = 0; i < 3; i++) {
+                    particles.push({
+                        x: x + (Math.random() - 0.5) * 10,
+                        y: y + (Math.random() - 0.5) * 10,
+                        vx: (Math.random() - 0.5) * 2.5,
+                        vy: (Math.random() - 0.5) * 2.5,
+                        size: Math.random() * 4 + 2,
+                        life: 1,
+                        decay: Math.random() * 0.02 + 0.008,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+
+            function animate() {
+                if (currentSlide !== 3) return;
+                ctx.clearRect(0, 0, W, H);
+                t += 0.015;
+
+                // Simulated cursor movement
+                const cx = W/2 + Math.cos(t * 2) * W * 0.3;
+                const cy = H/2 + Math.sin(t * 3) * H * 0.25;
+
+                spawnBurst(cx, cy);
+
+                // Draw cursor indicator
+                ctx.beginPath();
+                ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(139,92,246,0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Draw glow
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60);
+                grad.addColorStop(0, 'rgba(59,130,246,0.08)');
+                grad.addColorStop(0.5, 'rgba(139,92,246,0.04)');
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, W, H);
+
+                // Update particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.life -= p.decay;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vx *= 0.98;
+                    p.vy *= 0.98;
+
+                    if (p.life <= 0) {
+                        particles.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color + (p.life * 0.8) + ')';
+                    ctx.shadowColor = p.color + '0.5)';
+                    ctx.shadowBlur = p.size * 3;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                if (particles.length > 80) particles.splice(0, particles.length - 80);
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        // ═══════════════════════════════════
+        //  LIVE MOUSE EFFECTS ON THIS PAGE
+        // ═══════════════════════════════════
+        const cursor = document.getElementById('cursor');
+        const cursorGlow = document.getElementById('cursorGlow');
+        let mx = -200, my = -200;
+        let cx = -200, cy = -200;
+        let gx = -200, gy = -200;
+        const liveParticles = [];
+        let frameCount = 0;
+
+        const COLORS = [
+            'rgba(59,130,246,0.6)', 'rgba(139,92,246,0.6)',
+            'rgba(6,182,212,0.5)', 'rgba(236,72,153,0.4)',
+            'rgba(16,185,129,0.4)'
+        ];
+
+        document.addEventListener('mousemove', (e) => {
+            mx = e.clientX;
+            my = e.clientY;
+        });
+
+        function animateCursor() {
+            cx += (mx - cx) * 0.18;
+            cy += (my - cy) * 0.18;
+            cursor.style.left = cx + 'px';
+            cursor.style.top = cy + 'px';
+
+            gx += (mx - gx) * 0.07;
+            gy += (my - gy) * 0.07;
+            cursorGlow.style.left = gx + 'px';
+            cursorGlow.style.top = gy + 'px';
+
+            // Particles
+            frameCount++;
+            if (frameCount % 4 === 0 && mx > 0 && liveParticles.length < 30) {
+                const el = document.createElement('div');
+                el.className = 'live-particle';
+                const s = Math.random() * 4 + 2;
+                const c = COLORS[Math.floor(Math.random() * COLORS.length)];
+                el.style.width = s + 'px';
+                el.style.height = s + 'px';
+                el.style.background = c;
+                el.style.boxShadow = '0 0 ' + (s * 2) + 'px ' + c;
+                document.body.appendChild(el);
+                liveParticles.push({
+                    el, x: mx + (Math.random()-0.5)*12, y: my + (Math.random()-0.5)*12,
+                    vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5,
+                    life: 1, decay: Math.random()*0.025 + 0.015
+                });
+            }
+
+            for (let i = liveParticles.length - 1; i >= 0; i--) {
+                const p = liveParticles[i];
+                p.life -= p.decay;
+                p.x += p.vx; p.y += p.vy;
+                p.vx *= 0.97; p.vy *= 0.97;
+                if (p.life <= 0) {
+                    p.el.remove();
+                    liveParticles.splice(i, 1);
+                } else {
+                    p.el.style.left = p.x + 'px';
+                    p.el.style.top = p.y + 'px';
+                    p.el.style.opacity = p.life;
+                    p.el.style.transform = `translate(-50%,-50%) scale(${p.life})`;
+                }
+            }
+
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+    })();
+    </script>
+</body>
+</html>
