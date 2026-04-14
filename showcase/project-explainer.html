@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 AI Speech Translator — Project Explainer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        :root {
+            --bg: #06060c;
+            --card: #111119;
+            --card-border: rgba(255,255,255,0.06);
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --cyan: #06b6d4;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --pink: #ec4899;
+            --text: #f1f5f9;
+            --dim: #94a3b8;
+            --muted: #475569;
+            --grad: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+        }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh; width: 100vw;
+            overflow: hidden;
+        }
+
+        /* ── BG ── */
+        .bg-grid {
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                linear-gradient(rgba(59,130,246,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59,130,246,0.015) 1px, transparent 1px);
+            background-size: 70px 70px;
+        }
+        .bg-orb {
+            position: fixed; border-radius: 50%; z-index: 0; opacity: 0.5;
+        }
+        .bg-orb-1 {
+            width: 600px; height: 600px; top: -200px; left: -150px;
+            background: radial-gradient(circle, rgba(59,130,246,0.1), transparent 70%);
+            animation: orbF 14s ease-in-out infinite;
+        }
+        .bg-orb-2 {
+            width: 500px; height: 500px; bottom: -180px; right: -120px;
+            background: radial-gradient(circle, rgba(139,92,246,0.08), transparent 70%);
+            animation: orbF 18s ease-in-out infinite reverse;
+        }
+        @keyframes orbF {
+            0%,100% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(30px,20px) scale(1.1); }
+        }
+
+        /* ── SLIDES ── */
+        .slide {
+            position: fixed; inset: 0; z-index: 1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0.96) translateY(16px);
+            transition: opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1);
+            pointer-events: none; padding: 50px 60px;
+        }
+        .slide.active {
+            opacity: 1; transform: scale(1) translateY(0); pointer-events: all;
+        }
+        .slide.out {
+            opacity: 0; transform: scale(0.92) translateX(-40px);
+        }
+
+        /* ── TYPOGRAPHY ── */
+        .tag {
+            font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em;
+            text-transform: uppercase; color: var(--purple); margin-bottom: 14px;
+        }
+        .title {
+            font-size: 2.8rem; font-weight: 900; text-align: center;
+            line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 14px;
+            max-width: 750px;
+        }
+        .title .g { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .sub {
+            font-size: 1.05rem; color: var(--dim); text-align: center;
+            max-width: 600px; line-height: 1.7; margin-bottom: 28px;
+        }
+
+        /* ── PIPELINE ── */
+        .pipeline-box {
+            display: flex; align-items: center; gap: 0; margin-top: 10px;
+        }
+        .pipe-step {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 22px 28px; border-radius: 16px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+            min-width: 200px; text-align: center;
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        .slide.active .pipe-step { opacity: 1; transform: translateY(0); }
+        .slide.active .pipe-step:nth-child(1) { transition-delay: 0.3s; }
+        .slide.active .pipe-step:nth-child(3) { transition-delay: 0.5s; }
+        .slide.active .pipe-step:nth-child(5) { transition-delay: 0.7s; }
+
+        .pipe-step .step-icon { font-size: 2rem; margin-bottom: 8px; }
+        .pipe-step .step-num {
+            font-size: 0.55rem; font-weight: 800; letter-spacing: 0.15em;
+            text-transform: uppercase; margin-bottom: 6px;
+        }
+        .pipe-step .step-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+        .pipe-step .step-tech {
+            font-size: 0.65rem; font-family: 'JetBrains Mono', monospace;
+            padding: 3px 10px; border-radius: 6px; font-weight: 600;
+        }
+        .pipe-step.s1 .step-num { color: var(--blue); }
+        .pipe-step.s1 { border-color: rgba(59,130,246,0.15); }
+        .pipe-step.s1 .step-tech { background: rgba(59,130,246,0.1); color: var(--blue); }
+
+        .pipe-step.s2 .step-num { color: var(--purple); }
+        .pipe-step.s2 { border-color: rgba(139,92,246,0.15); }
+        .pipe-step.s2 .step-tech { background: rgba(139,92,246,0.1); color: var(--purple); }
+
+        .pipe-step.s3 .step-num { color: var(--cyan); }
+        .pipe-step.s3 { border-color: rgba(6,182,212,0.15); }
+        .pipe-step.s3 .step-tech { background: rgba(6,182,212,0.1); color: var(--cyan); }
+
+        .pipe-arrow {
+            font-size: 1.4rem; color: var(--muted); margin: 0 6px;
+            opacity: 0; transition: opacity 0.5s;
+        }
+        .slide.active .pipe-arrow { opacity: 1; transition-delay: 0.45s; }
+
+        /* ── STATS ── */
+        .stats-row {
+            display: flex; gap: 20px; margin-top: 10px; flex-wrap: wrap; justify-content: center;
+        }
+        .stat {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 24px 30px; text-align: center; min-width: 150px;
+            opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s;
+            position: relative; overflow: hidden;
+        }
+        .stat::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 3px 3px 0 0;
+        }
+        .slide.active .stat { opacity: 1; transform: translateY(0); }
+        .slide.active .stat:nth-child(1) { transition-delay: 0.2s; }
+        .slide.active .stat:nth-child(2) { transition-delay: 0.35s; }
+        .slide.active .stat:nth-child(3) { transition-delay: 0.5s; }
+        .slide.active .stat:nth-child(4) { transition-delay: 0.65s; }
+
+        .stat .stat-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .stat .stat-val { font-size: 1.8rem; font-weight: 900; letter-spacing: -0.02em; }
+        .stat .stat-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+
+        .st-blue .stat-val { color: var(--blue); }
+        .st-blue::before { background: var(--blue); }
+        .st-green .stat-val { color: var(--green); }
+        .st-green::before { background: var(--green); }
+        .st-purple .stat-val { color: var(--purple); }
+        .st-purple::before { background: var(--purple); }
+        .st-cyan .stat-val { color: var(--cyan); }
+        .st-cyan::before { background: var(--cyan); }
+
+        /* ── FEATURES GRID ── */
+        .feat-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+            max-width: 700px; margin-top: 10px;
+        }
+        .feat {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 16px 14px; display: flex; align-items: center; gap: 10px;
+            opacity: 0; transform: translateY(14px); transition: opacity 0.4s, transform 0.4s;
+        }
+        .slide.active .feat { opacity: 1; transform: translateY(0); }
+        .slide.active .feat:nth-child(1) { transition-delay: 0.15s; }
+        .slide.active .feat:nth-child(2) { transition-delay: 0.25s; }
+        .slide.active .feat:nth-child(3) { transition-delay: 0.35s; }
+        .slide.active .feat:nth-child(4) { transition-delay: 0.45s; }
+        .slide.active .feat:nth-child(5) { transition-delay: 0.55s; }
+        .slide.active .feat:nth-child(6) { transition-delay: 0.65s; }
+        .feat .feat-icon { font-size: 1.3rem; flex-shrink: 0; }
+        .feat .feat-text { font-size: 0.78rem; font-weight: 600; color: var(--dim); }
+
+        /* ── COMPARISON ── */
+        .comp-table {
+            border-collapse: collapse; margin-top: 10px; min-width: 600px;
+            opacity: 0; transform: translateY(16px); transition: opacity 0.6s 0.2s, transform 0.6s 0.2s;
+        }
+        .slide.active .comp-table { opacity: 1; transform: translateY(0); }
+        .comp-table th, .comp-table td {
+            padding: 12px 24px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .comp-table th {
+            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.12em; color: var(--muted);
+        }
+        .comp-table th:last-child { color: var(--green); }
+        .comp-table td { font-size: 0.85rem; color: var(--dim); }
+        .comp-table td:first-child { font-weight: 600; color: var(--text); }
+        .comp-table td.ours { color: var(--green); font-weight: 700; }
+        .comp-table td.bad { color: var(--red); opacity: 0.6; }
+
+        /* ── COST HERO ── */
+        .cost-hero {
+            display: flex; align-items: center; gap: 20px; margin-top: 20px;
+            padding: 24px 36px; border-radius: 18px;
+            background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.06));
+            border: 1px solid rgba(16,185,129,0.2);
+            opacity: 0; transform: scale(0.95); transition: opacity 0.5s 0.3s, transform 0.5s 0.3s;
+        }
+        .slide.active .cost-hero { opacity: 1; transform: scale(1); }
+        .cost-price { font-size: 3rem; font-weight: 900; color: var(--green); }
+        .cost-vs { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        .cost-old { font-size: 1.4rem; color: var(--red); text-decoration: line-through; opacity: 0.5; }
+        .cost-save {
+            padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 800;
+            background: rgba(16,185,129,0.15); color: var(--green); letter-spacing: 0.04em;
+        }
+
+        /* ── TEAM ── */
+        .team-row {
+            display: flex; gap: 24px; margin-top: 10px;
+        }
+        .team-card {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 28px 24px; text-align: center; min-width: 180px;
+            opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s;
+        }
+        .slide.active .team-card { opacity: 1; transform: translateY(0); }
+        .slide.active .team-card:nth-child(1) { transition-delay: 0.2s; }
+        .slide.active .team-card:nth-child(2) { transition-delay: 0.35s; }
+        .slide.active .team-card:nth-child(3) { transition-delay: 0.5s; }
+        .team-card .team-avatar {
+            width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 12px;
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+        }
+        .team-card .team-name { font-size: 0.9rem; font-weight: 700; margin-bottom: 4px; }
+        .team-card .team-role { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+        /* ── FUTURE CARD ── */
+        .future-hero {
+            display: flex; align-items: center; gap: 30px; margin-top: 10px;
+            padding: 28px 36px; border-radius: 20px;
+            background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(236,72,153,0.06));
+            border: 1px solid rgba(139,92,246,0.2);
+            max-width: 650px;
+            opacity: 0; transform: translateY(16px); transition: opacity 0.5s 0.3s, transform 0.5s 0.3s;
+        }
+        .slide.active .future-hero { opacity: 1; transform: translateY(0); }
+        .future-hero .watch-icon { font-size: 3.5rem; }
+        .future-hero h3 {
+            font-size: 1.1rem; font-weight: 800; margin-bottom: 6px;
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .future-hero p { font-size: 0.8rem; color: var(--dim); line-height: 1.6; }
+
+        /* ── CTA ── */
+        .cta {
+            display: inline-flex; align-items: center; gap: 10px; margin-top: 20px;
+            padding: 14px 30px; border-radius: 14px; background: var(--grad);
+            color: white; font-weight: 700; font-size: 0.9rem; border: none;
+            cursor: pointer; font-family: inherit; text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59,130,246,0.3); }
+
+        /* ── SLIDE INTRO ICON ── */
+        .hero-icon {
+            font-size: 3.5rem; margin-bottom: 16px;
+            animation: iconBob 2.5s ease-in-out infinite;
+        }
+        @keyframes iconBob {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* ── PROGRESS BAR ── */
+        .progress {
+            position: fixed; bottom: 0; left: 0; height: 3px; z-index: 100;
+            background: var(--grad);
+            box-shadow: 0 0 15px rgba(59,130,246,0.4);
+            transition: width 0.4s ease;
+        }
+
+        /* ── NAV ── */
+        .nav-dots {
+            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 100;
+        }
+        .nav-dot {
+            width: 8px; height: 8px; border-radius: 50%; border: none; cursor: pointer;
+            background: rgba(255,255,255,0.12); transition: all 0.3s;
+        }
+        .nav-dot.active {
+            background: var(--purple); box-shadow: 0 0 10px rgba(139,92,246,0.5);
+            transform: scale(1.3);
+        }
+
+        .slide-ct {
+            position: fixed; bottom: 22px; right: 28px; z-index: 100;
+            font-size: 0.7rem; font-weight: 600; color: var(--muted); letter-spacing: 0.08em;
+        }
+        .slide-ct .cur { color: var(--text); font-size: 1rem; font-weight: 800; }
+
+        /* ── CONTROLS ── */
+        .ctrl {
+            position: fixed; top: 22px; z-index: 100;
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; border-radius: 12px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            color: var(--dim); font-size: 0.7rem; font-weight: 600;
+            cursor: pointer; font-family: inherit; letter-spacing: 0.04em;
+            transition: all 0.3s;
+        }
+        .ctrl:hover { background: rgba(255,255,255,0.08); }
+        .ctrl-voice { right: 22px; }
+        .ctrl-skip { left: 22px; }
+        .ctrl.muted { opacity: 0.45; }
+
+        /* ── WAVEFORM ANIM ── */
+        .waveform {
+            display: flex; align-items: flex-end; gap: 3px; height: 40px; margin-top: 16px;
+        }
+        .wave-bar {
+            width: 4px; border-radius: 2px; background: var(--blue);
+            animation: waveAnim 1s ease-in-out infinite;
+        }
+        .wave-bar:nth-child(1) { height: 12px; animation-delay: 0s; }
+        .wave-bar:nth-child(2) { height: 24px; animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { height: 18px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { height: 32px; animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { height: 20px; animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { height: 36px; animation-delay: 0.5s; }
+        .wave-bar:nth-child(7) { height: 14px; animation-delay: 0.6s; }
+        .wave-bar:nth-child(8) { height: 28px; animation-delay: 0.7s; }
+        .wave-bar:nth-child(9) { height: 22px; animation-delay: 0.8s; }
+        .wave-bar:nth-child(10) { height: 16px; animation-delay: 0.9s; }
+        @keyframes waveAnim {
+            0%,100% { transform: scaleY(0.4); opacity: 0.4; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        /* ── FLOWING TEXT ── */
+        .flow-text {
+            display: flex; align-items: center; gap: 14px; margin-top: 18px;
+            font-size: 0.85rem; color: var(--dim);
+        }
+        .flow-arrow { color: var(--purple); font-size: 1.2rem; }
+
+        /* ── TECH PILLS ── */
+        .tech-pills {
+            display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 16px;
+        }
+        .pill {
+            padding: 6px 14px; border-radius: 8px; font-size: 0.7rem; font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--card-border);
+            color: var(--dim);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+
+    <div class="progress" id="progress"></div>
+
+    <button class="ctrl ctrl-skip" id="skipBtn">⏭ Next</button>
+    <button class="ctrl ctrl-voice" id="voiceBtn">🔊 Voice ON</button>
+
+    <div class="nav-dots" id="navDots"></div>
+    <div class="slide-ct"><span class="cur" id="curNum">1</span> / <span id="totNum">9</span></div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 1: INTRO
+         ═══════════════════════════════════════ -->
+    <div class="slide active" data-s="0">
+        <div class="hero-icon">🌐</div>
+        <div class="tag">B.Tech CSE Project</div>
+        <h1 class="title">
+            <span class="g">ESP32 AI</span><br>Speech Translator
+        </h1>
+        <p class="sub">
+            A pocket-sized, AI-powered device that listens to any language and speaks it back translated — in real time. Built from scratch for under ₹500.
+        </p>
+        <div class="tech-pills">
+            <span class="pill">ESP32</span>
+            <span class="pill">Python</span>
+            <span class="pill">Whisper AI</span>
+            <span class="pill">Flask</span>
+            <span class="pill">BLE</span>
+            <span class="pill">PWA</span>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 2: THE PROBLEM
+         ═══════════════════════════════════════ -->
+    <div class="slide" data-s="1">
+        <div class="hero-icon">😰</div>
+        <div class="tag">The Problem</div>
+        <h1 class="title">
+            Language Barriers<br><span class="g">Cost Too Much</span> to Break
+        </h1>
+        <p class="sub">
+            Commercial translators cost ₹8,000 to ₹25,000. They're closed-source, limited in features, and don't support Bluetooth earbuds for private listening.
+        </p>
+        <div class="cost-hero">
+            <div>
+                <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px;">Commercial Devices</div>
+                <div style="font-size:2rem; font-weight:900; color:var(--red);">₹8,000 – ₹25,000</div>
+            </div>
+            <div style="font-size:0.8rem; color:var(--muted);">Closed Source • No BT Earbuds • Vendor Lock-in</div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 3: OUR SOLUTION
+         ═══════════════════════════════════════ -->
+    <div class="slide" data-s="2">
+        <div class="hero-icon">💡</div>
+        <div class="tag">Our Solution</div>
+        <h1 class="title">
+            Build It <span class="g">From Scratch</span><br>for ₹440
+        </h1>
+        <p class="sub">
+            An ESP32 microcontroller connects via Bluetooth to your phone. Press the button, speak, and hear the translation through your earbuds. 100+ languages supported.
+        </p>
+        <div class="cost-hero">
+            <div>
+                <span class="cost-price">₹440</span>
+                <span class="cost-vs"> vs </span>
+                <span class="cost-old">₹10,800+</span>
+            </div>
+            <span class="cost-save">95% CHEAPER</span>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 4: HOW IT WORKS
+         ═══════════════════════════════════════ -->
+    <div class="slide" data-s="3">
+        <div class="tag">How It Works</div>
+        <h1 class="title">
+            <span class="g">3-Stage</span> AI Pipeline
+        </h1>
+        <p class="sub">
+            Your voice goes through three AI stages — captured, translated, and spoken back in another language.
+        </p>
+        <div class="pipeline-box">
+            <div class="pipe-step s1">
+                <span class="step-icon">🎤</span>
+                <span class="step-num">Stage 01</span>
+                <span class="step-title">Speech → Text</span>
+                <span class="step-tech">Faster-Whisper</span>
+            </div>
+            <span class="pipe-arrow">→</span>
+            <div class="pipe-step s2">
+                <span class="step-icon">🌐</span>
+                <span class="step-num">Stage 02</span>
+                <span class="step-title">Text → Translation</span>
+                <span class="step-tech">Google Translate</span>
+            </div>
+            <span class="pipe-arrow">→</span>
+            <div class="pipe-step s3">
+                <span class="step-icon">🔊</span>
+                <span class="step-num">Stage 03</span>
+                <span class="step-title">Text → Speech</span>
+                <span class="step-tech">gTTS</span>
+            </div>
+        </div>
+        <div class="flow-text">
+            <span>🗣 You Speak</span>
+            <span class="flow-arrow">→</span>
+            <span>📝 Transcribed</span>
+            <span class="flow-arrow">→</span>
+            <span>🔄 Translated</span>
+            <span class="flow-arrow">→</span>
+            <span>🎧 You Hear</span>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 5: KEY STATS
+         ═══════════════════════════════════════ -->
+    <div class="slide" data-s="4">
+        <div class="tag">By The Numbers</div>
+        <h1 class="title">
+            Performance <span class="g">Stats</span>
+        </h1>
+        <p class="sub">
+            Real benchmarks from our working prototype.
+        </p>
+        <div class="stats-row">
+            <div class="stat st-blue">
+                <div class="stat-icon">🌍</div>
+                <div class="stat-val">100+</div>
+                <div class="stat-label">Languages</div>
+            </div>
+            <div class="stat st-green">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-val">3.8s</div>
+                <div class="stat-label">Avg Latency</div>
+            </div>
+            <div class="stat st-purple">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-val">96%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat st-cyan">
+                <div class="stat-icon">🔋</div>
+                <div class="stat-val">10.5h</div>
+                <div class="stat-label">Battery Life</div>
+            </div>
+        </div>
+        <div class="waveform">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 6: FEATURES
+         ═══════════════════════════════════════ -->
+    <div class="slide" data-s="5">
+        <div class="tag">Highlights</div>
+        <h1 class="title">
+            Key <span class="g">Features</span>
+        </h1>
+        <p class="sub">What makes this translator special.</p>
+        <div class="feat-grid">
+            <div class="feat"><span class="feat-icon">🔵</span><span class="feat-text">BLE Push-to-Talk</span></div>
+            <div class="feat"><span class="feat-icon">🎧</span><span class="feat-text">Bluetooth Earbuds Output</span></div>
+            <div class="feat"><span class="feat-icon">🔍</span><span class="feat-text">Auto Language Detection</span></div>
+            <div class="feat"><span class="feat-icon">🔁</span><span class="feat-text">Instant Replay & History</span></div>
+            <div class="feat"><span class="feat-icon">📲</span><span class="feat-text">Installable PWA</span></div>
+            <div class="feat"><span class="feat-icon">☁️</span><span class="feat-text">Cloud Deployable</span></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 7: COMPARISON
+         ═══════════════════════════════════════ -->
+    <div class="slide" data-s="6">
+        <div class="tag">Head to Head</div>
+        <h1 class="title">
+            vs <span class="g">Commercial</span> Devices
+        </h1>
+        <p class="sub">How we stack up against devices costing 20x more.</p>
+        <table class="comp-table">
+            <thead>
+                <tr><th></th><th>Commercial</th><th>Our Device</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>💰 Cost</td><td>₹8,000 – ₹25,000</td><td class="ours">₹440</td></tr>
+                <tr><td>🌍 Languages</td><td>80 – 155</td><td class="ours">100+</td></tr>
+                <tr><td>🎧 BT Earbuds</td><td class="bad">❌ No</td><td class="ours">✅ Yes</td></tr>
+                <tr><td>🔓 Open Source</td><td class="bad">❌ No</td><td class="ours">✅ Yes</td></tr>
+                <tr><td>🔁 History Replay</td><td class="bad">❌ Limited</td><td class="ours">✅ 20 items</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 8: TEAM & FUTURE
+         ═══════════════════════════════════════ -->
+    <div class="slide" data-s="7">
+        <div class="tag">The Team & Future</div>
+        <h1 class="title">
+            Built by <span class="g">Three Students</span>
+        </h1>
+        <p class="sub">B.Tech Computer Science Engineering</p>
+        <div class="team-row">
+            <div class="team-card">
+                <div class="team-avatar">🧑‍💻</div>
+                <div class="team-name">Balamurugan S</div>
+                <div class="team-role">Team Member</div>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">⚙️</div>
+                <div class="team-name">Siva Ajish Ram</div>
+                <div class="team-role">Team Member</div>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">🎨</div>
+                <div class="team-name">Hari Karthikeyan</div>
+                <div class="team-role">Team Member</div>
+            </div>
+        </div>
+        <div class="future-hero">
+            <span class="watch-icon">⌚</span>
+            <div>
+                <h3>Future: Smartwatch Integration</h3>
+                <p>A wrist-mounted translator with built-in mic, haptic feedback, and on-device TinyML AI — all in a sleek wearable form factor.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SLIDE 9: THANK YOU
+         ═══════════════════════════════════════ -->
+    <div class="slide" data-s="8">
+        <div class="hero-icon">🚀</div>
+        <div class="tag">Open Source</div>
+        <h1 class="title">
+            <span class="g">Thank You</span>
+        </h1>
+        <p class="sub">
+            This project is fully open source on GitHub. Scan the QR code on our showcase or visit the repository to explore the code, contribute, or build your own!
+        </p>
+        <a class="cta" href="index.html">🌐 View Interactive Showcase →</a>
+        <div class="tech-pills" style="margin-top:24px;">
+            <span class="pill" style="color:var(--green);">github.com/sivaajishramr/ai-speech-translator-</span>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const slides = document.querySelectorAll('.slide');
+        const TOTAL = slides.length;
+        let cur = 0, transitioning = false, voiceOn = true, autoTmr = null;
+
+        // Narration scripts
+        const NARR = [
+            "Introducing the ESP32 AI Speech Translator. A pocket-sized, AI-powered device that listens to any language, and speaks it back translated, in real time. Built entirely from scratch for under 500 rupees, using an ESP32 microcontroller, Python, Whisper AI, and Bluetooth Low Energy.",
+
+            "Here's the problem we're solving. Commercial translation devices cost anywhere from 8,000 to 25,000 rupees. They're closed-source, don't support Bluetooth earbuds for private listening, and lock you into a single vendor's ecosystem.",
+
+            "Our solution? Build it ourselves for just 440 rupees. That's 95 percent cheaper than commercial alternatives. An ESP32 connects to your phone via Bluetooth. You press the button, speak in any language, and hear the translation through your earbuds.",
+
+            "The system uses a 3-stage AI pipeline. Stage 1: Faster Whisper converts your speech to text with 96 percent accuracy and hallucination rejection. Stage 2: Google Translate converts the text to your target language, with automatic source language detection. Stage 3: Google Text to Speech generates natural audio, which plays through your Bluetooth earbuds.",
+
+            "Let's look at the numbers. 100 plus languages supported. 3.8 seconds average latency from speaking to hearing the translation. 96 percent recognition accuracy with our multi-layer filtering. And 10.5 hours of battery life on a 1000 milliamp hour battery.",
+
+            "Key features that set us apart: BLE Push-to-Talk for hands-free operation. Bluetooth earbuds output for private listening. Automatic language detection, so you don't need to select the source language. Instant replay and history of your last 20 translations. An installable Progressive Web App. And cloud deployment support via Docker and Hugging Face Spaces.",
+
+            "How do we compare to commercial devices? Cost: we're 440 rupees versus their 8,000 to 25,000. Languages: we support 100 plus. Bluetooth earbuds? We have it, they don't. Open source? We are, they aren't. History replay? We store 20 items with physical button navigation.",
+
+            "This project was built by three B.Tech CSE students: Balamurugan S, Siva Ajish Ram, and Hari Karthikeyan. Our future vision: a smartwatch version with built-in microphone, haptic feedback, and on-device TinyML AI for offline speech recognition.",
+
+            "Thank you for watching! This project is fully open source on GitHub. Visit the interactive showcase to explore every technical detail, or scan the QR code to view the source code and build your own translator."
+        ];
+
+        // Build dots
+        const dots = document.getElementById('navDots');
+        for (let i = 0; i < TOTAL; i++) {
+            const d = document.createElement('button');
+            d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            d.onclick = () => go(i);
+            dots.appendChild(d);
+        }
+        document.getElementById('totNum').textContent = TOTAL;
+
+        function ui() {
+            document.getElementById('curNum').textContent = cur + 1;
+            document.getElementById('progress').style.width = ((cur + 1) / TOTAL * 100) + '%';
+            dots.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('active', i === cur));
+        }
+
+        function go(idx) {
+            if (transitioning || idx === cur || idx < 0 || idx >= TOTAL) return;
+            transitioning = true;
+            clearTimeout(autoTmr);
+            window.speechSynthesis.cancel();
+
+            slides[cur].classList.remove('active');
+            slides[cur].classList.add('out');
+
+            setTimeout(() => {
+                slides[cur].classList.remove('out');
+                cur = idx;
+                slides[cur].classList.add('active');
+                ui();
+                transitioning = false;
+                if (voiceOn) speak(cur);
+                else autoAdv();
+            }, 450);
+        }
+
+        function next() { if (cur < TOTAL - 1) go(cur + 1); }
+
+        function speak(i) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(NARR[i]);
+            u.rate = 0.92; u.pitch = 1.0; u.volume = 0.9;
+            const v = window.speechSynthesis.getVoices();
+            const pref = v.find(x => x.name.includes('Google') && x.lang.startsWith('en'))
+                || v.find(x => x.lang.startsWith('en-US'))
+                || v.find(x => x.lang.startsWith('en'));
+            if (pref) u.voice = pref;
+            u.onend = () => { setTimeout(() => { if (cur < TOTAL - 1) next(); }, 1200); };
+            window.speechSynthesis.speak(u);
+        }
+
+        function autoAdv() {
+            clearTimeout(autoTmr);
+            autoTmr = setTimeout(() => { if (cur < TOTAL - 1) next(); }, 7000);
+        }
+
+        // Controls
+        const vBtn = document.getElementById('voiceBtn');
+        vBtn.onclick = () => {
+            voiceOn = !voiceOn;
+            vBtn.innerHTML = voiceOn ? '🔊 Voice ON' : '🔇 Voice OFF';
+            vBtn.classList.toggle('muted', !voiceOn);
+            if (!voiceOn) { window.speechSynthesis.cancel(); autoAdv(); }
+            else { clearTimeout(autoTmr); speak(cur); }
+        };
+
+        document.getElementById('skipBtn').onclick = next;
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+            if (e.key === 'ArrowLeft' && cur > 0) go(cur - 1);
+        });
+
+        // Start narration
+        setTimeout(() => { if (voiceOn) speak(0); }, 1000);
+    })();
+    </script>
+</body>
+</html>
